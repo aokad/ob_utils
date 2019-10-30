@@ -21,10 +21,17 @@ python setup.py install
 ob_utils comp [-h] --in_onebreak IN_ONEBREAK --in_genomonsv
                  IN_GENOMONSV --output OUTPUT [--margin MARGIN]
 ```
+```
+ob_utils merge [-h] --in_onebreak_filt1 IN_ONEBREAK_FILT1
+                 --in_onebreak_filt2 IN_ONEBREAK_FILT2 --output OUTPUT
+```
 
 You can check the manual by typing
 ```
 ob_utils comp -h
+```
+```
+ob_utils merge -h
 ```
 
 ## Results
