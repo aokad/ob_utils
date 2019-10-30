@@ -1,2 +1,0 @@
-Chr	Pos	Dir	Junc_Seq	Num_Tumor_Total_Read	Num_Tumor_Var_Read	VAF_Tumor	Num_Control_Total_Read	Num_Control_Var_Read	VAF_Control	Minus_Log_Fisher_P_value	Peaked_Ratio	NUM_Local_Control_Total_Read	GenomonSV
-11	27678122	+	TCTTGTAT	156	17	0.109	120	1	0.0083	3.4384	1.0	1	11:+27675574-11:+27678112
