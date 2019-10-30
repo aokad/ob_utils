@@ -98,18 +98,18 @@ def comp_main(args):
     out_pref, ext = os.path.splitext(args.output)
     genomonSVtoBedpe(args.in_genomonsv, args.margin, out_pref + ".sv1.bedpe")
     
-    # hOUT = open(out_pref + ".sv2.bedpe", 'w')
-    # subprocess.check_call(["bedtools", "sort", "-i", out_pref + ".sv1.bedpe"], stdout = hOUT)
-    # hOUT.close()
-    
     onebreaktoBed(args.in_onebreak, args.margin, out_pref + ".ob1.bed")
 
-    hOUT = open(out_pref + ".pair.bedpe", 'w')
+    hOUT = open(out_pref + ".pair1.bedpe", 'w')
     subprocess.check_call(["bedtools", "pairtobed", "-s", "-a", out_pref + ".sv1.bedpe", "-b", out_pref + ".ob1.bed"], stdout = hOUT)
     hOUT.close()
     
-    sv_comp1 = makeHash(out_pref + ".pair.bedpe", 29, 35, 34, args.margin)
+    sv_comp1 = makeHash(out_pref + ".pair1.bedpe", 29, 35, 34, args.margin)
     
     annotSvComp(args.in_onebreak, sv_comp1, args.output)
+
+    os.remove(out_pref + ".sv1.bedpe")
+    os.remove(out_pref + ".ob1.bed")
+    os.remove(out_pref + ".pair1.bedpe")
     
     
