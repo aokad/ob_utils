@@ -1,5 +1,6 @@
 from __future__ import print_function 
 import os, sys
+import subprocess
 
 def merge_main(args):
 
@@ -36,4 +37,5 @@ def merge_main(args):
                 key = chrom +"\t"+ pos +"\t"+ dir
                 if key in d_file2:
                     print(line +"\t"+ d_file2[key], file=hout)
-        
+
+
