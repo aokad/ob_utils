@@ -117,21 +117,23 @@ def make_liftover_input(in_vcf, out_pref):
     hout_tdc.close()
 
 
-def make_hash_from_liftover_output(out_pref):
+def make_hash_from_liftover_output(grch38_chr_bed, unmapped_chr_bed, grch38_bkpd_bed,
+    unmapped_bkpd_bed, grch38_src_bed, unmapped_src_bed, grch38_tdc_bed, unmapped_tdc):
+    
     h_chr = {}
-    h_chr = make_hash_chr(out_pref+ ".chr_GRCh38.bed", h_chr)
+    h_chr = make_hash_chr(grch38_chr_bed, h_chr)
     
     h_bkpb = {}
-    h_bkpb = make_hash_bkpb(out_pref+ ".bkpb_GRCh38.bed", h_bkpb, True)
-    h_bkpb = make_hash_bkpb(out_pref+ ".bkpb_unmapped.bed", h_bkpb, False)
+    h_bkpb = make_hash_bkpb(grch38_bkpd_bed, h_bkpb, True)
+    h_bkpb = make_hash_bkpb(unmapped_bkpd_bed, h_bkpb, False)
     
     h_src = {}
-    h_src = make_hash_src_tdc(out_pref+ ".src_GRCh38.bed", h_src, True)
-    h_src = make_hash_src_tdc(out_pref+ ".src_unmapped.bed", h_src, False)
+    h_src = make_hash_src_tdc(grch38_src_bed, h_src, True)
+    h_src = make_hash_src_tdc(unmapped_src_bed, h_src, False)
     
     h_tdc = {}
-    h_tdc = make_hash_src_tdc(out_pref+ ".tdc_GRCh38.bed", h_tdc, True)
-    h_tdc = make_hash_src_tdc(out_pref+ ".tdc_unmapped.bed", h_tdc, False)
+    h_tdc = make_hash_src_tdc(grch38_tdc_bed, h_tdc, True)
+    h_tdc = make_hash_src_tdc(unmapped_tdc, h_tdc, False)
 
     return h_chr, h_bkpb, h_src, h_tdc
     
@@ -193,9 +195,27 @@ def liftover_trafic_main(args):
     # liftover tdc 
     subprocess.check_call(["liftOver", out_pref+ ".tdc.bed", args.map_chain, out_pref+ ".tdc_GRCh38.bed", out_pref+ ".tdc_unmapped.bed"])
             
-    h_chr, h_bkpb, h_src, h_tdc = make_hash_from_liftover_output(out_pref)
+    h_chr, h_bkpb, h_src, h_tdc = make_hash_from_liftover_output(
+        out_pref+ ".chr_GRCh38.bed",out_pref+ ".chr_unmapped.bed",
+        out_pref+ ".bkpb_GRCh38.bed", out_pref+ ".bkpb_unmapped.bed",
+        out_pref+ ".src_GRCh38.bed", out_pref+ ".src_unmapped.bed",
+        out_pref+ ".tdc_GRCh38.bed", out_pref+ ".tdc_unmapped.bed")
     
     write_result(args.in_vcf, args.out_vcf, h_chr, h_bkpb, h_src, h_tdc)
+    
+    if args.debug:
+        os.remove(out_pref + ".chr.bed")
+        os.remove(out_pref + ".chr_GRCh38.bed")
+        os.remove(out_pref + ".chr_unmapped.bed")
+        os.remove(out_pref + ".bkpb.bed")
+        os.remove(out_pref + ".bkpb_GRCh38.bed")
+        os.remove(out_pref + ".bkpb_unmapped.bed")
+        os.remove(out_pref + ".src.bed")
+        os.remove(out_pref + ".src_GRCh38.bed")
+        os.remove(out_pref + ".src_unmapped.bed")
+        os.remove(out_pref + ".tdc.bed")
+        os.remove(out_pref + ".tdc_GRCh38.bed")
+        os.remove(out_pref + ".tdc_unmapped.bed")
 
 
 
