@@ -12,8 +12,10 @@ from .comp_sv import comp_main
 from .merge_sv import merge_main
 from .genomonsv_util import genomonSVtoBedpe_main
 from .manta_util import mantaSVtoBedpe_main
+from .gridss_util import gridssSVtoBedpe_main
 from .svaba_util import svabaSVtoBedpe_main
 from .merge_sv2 import merge_SVs
+from .liftover_trafic import liftover_trafic_main
 
 def create_parser():
     prog = "ob_utils"
@@ -60,6 +62,16 @@ def create_parser():
         return manta_parser
     
     
+    def _create_gridss_util_parser(subparsers):
+        
+        gridss_parser = subparsers.add_parser("gridss_sv", help = "convert the manta sv format to BEDPE file")
+        gridss_parser.add_argument("--in_gridss_sv", help = "the bedpe format file", type = str, required=True)
+        gridss_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
+        gridss_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
+        gridss_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        return gridss_parser
+        
+    
     def _create_svaba_util_parser(subparsers):
         
         svaba_parser = subparsers.add_parser("svaba_sv", help = "convert the svaba sv format to BEDPE file")
@@ -81,18 +93,26 @@ def create_parser():
     def _merge_sv_parser(subparsers):
         
         merge_svs_parser = subparsers.add_parser("merge_sv", help = "merge bedpe files")
-        merge_svs_parser.add_argument("--in_bedpe1", help = "the bedpe format file", type = str, required=True)
-        merge_svs_parser.add_argument("--in_bedpe2", help = "the bedpe format file", type = str, required=True)
-        merge_svs_parser.add_argument("--in_bedpe3", help = "the bedpe format file", type = str, required=True)
-        merge_svs_parser.add_argument("--in_file_type1", help = "select genomonSV, manta or svaba", type = str, required=True)
-        merge_svs_parser.add_argument("--in_file_type2", help = "select genomonSV, manta or svaba", type = str, required=True)
-        merge_svs_parser.add_argument("--in_file_type3", help = "select genomonSV, manta or svaba", type = str, required=True)
+        merge_svs_parser.add_argument("--in_bedpe1", help = "the bedpe format file (GenomonSV)", type = str, required=True)
+        merge_svs_parser.add_argument("--in_bedpe2", help = "the bedpe format file (Manta)", type = str, required=True)
+        merge_svs_parser.add_argument("--in_bedpe3", help = "the bedpe format file (SvABA)", type = str, required=True)
+        merge_svs_parser.add_argument("--in_bedpe4", help = "the bedpe format file (GRIDSS)", type = str, required=True)
         merge_svs_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
         merge_svs_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
         merge_svs_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False ) 
         merge_svs_parser.add_argument("--f_germ", help = 'sample is not Tumor/Normal pair.', action = 'store_true', default = False )
-        merge_svs_parser.add_argument("--genome_id", help = 'the genome id used for selecting UCSC-GRC chromosome name corresponding files (default: hg19).', choices = ["hg19", "hg38", "mm10"], default = "hg38" )
+        merge_svs_parser.add_argument("--genome_id", help = 'the genome id used for selecting UCSC-GRC chromosome name corresponding files (default: hg38).', choices = ["hg19", "hg38"], default = "hg38" )
         return merge_svs_parser
+    
+    
+    def _liftover_trafic_parser(subparsers):
+        
+        lo_trafic_parser = subparsers.add_parser("liftover_trafic", help = "merge bedpe files")
+        lo_trafic_parser.add_argument("--in_vcf", help = "the result of trafic (hg19)", type = str, required=True)
+        lo_trafic_parser.add_argument("--out_vcf", help = 'the result of trafic (liftover hg38)', type = str, required=True) 
+        lo_trafic_parser.add_argument("--map_chain", help = 'the map chain file', type = str, required=True, default = "hg19ToHg38.over.chain")
+        lo_trafic_parser.add_argument("--debug", help = 'if True, not remove temp files', action = 'store_true', default = False )
+        return lo_trafic_parser
     
 
     comp_parser = _create_comp_parser(subparsers)
@@ -103,8 +123,12 @@ def create_parser():
     genomonsv_parser.set_defaults(func = genomonSVtoBedpe_main)
     manta_parser = _create_manta_util_parser(subparsers)
     manta_parser.set_defaults(func = mantaSVtoBedpe_main)
+    gridss_parser = _create_gridss_util_parser(subparsers)
+    gridss_parser.set_defaults(func = gridssSVtoBedpe_main)
     svaba_parser = _create_svaba_util_parser(subparsers)
     svaba_parser.set_defaults(func = svabaSVtoBedpe_main)
     merge_svs_parser = _merge_sv_parser(subparsers)
     merge_svs_parser.set_defaults(func = merge_SVs)
+    lo_trafic_parser = _liftover_trafic_parser(subparsers)
+    lo_trafic_parser.set_defaults(func = liftover_trafic_main)
     return parser
