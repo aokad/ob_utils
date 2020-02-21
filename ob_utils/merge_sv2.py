@@ -67,8 +67,21 @@ def get_info_val(infos, key):
             break
     return ret
 
-
-def get_insert_seq(file_type, F, column_idx):
+def get_alt_seq(alt):
+    ret = ""
+    if alt.find("[") > -1:
+        l_alt = alt.split("[")
+        if len(l_alt[0]) > 1:   ret = (l_alt[0])[1:]
+        elif len(l_alt[2]) > 1: ret = (l_alt[2])[:-1]
+            
+    elif alt.find("]") > -1:
+        l_alt = alt.split("]")
+        if len(l_alt[0]) > 1:   ret = (l_alt[0])[1:]
+        elif len(l_alt[2]) > 1: ret = (l_alt[2])[:-1]
+        
+    return ret
+    
+def get_insert_seq(file_type, F, column_idx, alt_idx):
     insert_seq = ""
     if file_type == "GenomonSV":
         insert_seq = F[column_idx] 
@@ -76,7 +89,8 @@ def get_insert_seq(file_type, F, column_idx):
         insert_seq = get_info_val(F[column_idx], "SVINSSEQ")
     elif file_type == "SvABA":
         insert_seq = get_info_val(F[column_idx], "INSERTION")
-        
+    elif file_type == "GRIDSS":
+        insert_seq = get_alt_seq(F[alt_idx])
     if insert_seq == "---": insert_seq = ""
     return insert_seq
     
@@ -227,7 +241,7 @@ def get_hash_value(chrA, startA, strandA, chrB, startB, strandB, insert_seq):
     return val
 
 
-def makeHash(anno_file, file_type_pair, margin, sv_type_idx, pair_idx, pair_info_idx):
+def makeHash(anno_file, file_type_pair, margin, sv_type_idx, pair_idx, pair_info_idx, alt_idx):
     sv_comp = {}
     with open(anno_file, 'r') as hin:
         for line in hin:
@@ -247,7 +261,7 @@ def makeHash(anno_file, file_type_pair, margin, sv_type_idx, pair_idx, pair_info
             posA_pair, posB_pair = get_position(infoA_pair, infoB_pair)
             homlen = get_homlen(infoB_pair)
             homseq = get_homseq(infoB_pair)
-            insert_seq = get_insert_seq(file_type_pair, F, pair_info_idx)
+            insert_seq = get_insert_seq(file_type_pair, F, pair_info_idx, alt_idx)
 
             val = ""
             # Manta
@@ -279,6 +293,12 @@ def makeHash(anno_file, file_type_pair, margin, sv_type_idx, pair_idx, pair_info
                     
                 val = get_hash_value(chrA_pair, posA_pair, strandA_pair, chrB_pair, posB_pair, strandB_pair, insert_seq)
                 
+            # GRIDSS
+            elif file_type_pair == "GRIDSS":
+                # posB_pair = str(int(homlen) + int(posB_pair))
+    
+                val = get_hash_value(chrA_pair, posA_pair, strandA_pair, chrB_pair, posB_pair, strandB_pair, insert_seq)
+                
             # GenomonSV
             else:
                 val = get_hash_value(chrA_pair, startA_pair, strandA_pair, chrB_pair, startB_pair, strandB_pair, insert_seq)
@@ -287,7 +307,7 @@ def makeHash(anno_file, file_type_pair, margin, sv_type_idx, pair_idx, pair_info
     return sv_comp
 
 
-def annotate_other_sv(main_bedpe, outfile, sv_comp1, sv_comp2, margin):
+def annotate_other_sv(main_bedpe, outfile, sv_comp1, sv_comp2, sv_comp3, margin):
     
     hOUT = open(outfile, 'w')
     with open(main_bedpe) as hin:
@@ -304,10 +324,9 @@ def annotate_other_sv(main_bedpe, outfile, sv_comp1, sv_comp2, margin):
             
             sv_info1 = sv_comp1[key] if key in sv_comp1 else "---"
             sv_info2 = sv_comp2[key] if key in sv_comp2 else "---"
+            sv_info3 = sv_comp3[key] if key in sv_comp3 else "---"
             
-            
-            
-            print( chrA+'\t'+startA+'\t'+endA+'\t'+chrB+'\t'+startB+'\t'+endB+'\t'+'\t'.join(F[6:]) +'\t'+ sv_info1 +'\t'+ sv_info2, file=hOUT)
+            print( chrA+'\t'+startA+'\t'+endA+'\t'+chrB+'\t'+startB+'\t'+endB+'\t'+'\t'.join(F[6:]) +'\t'+ sv_info1 +'\t'+ sv_info2 +'\t'+ sv_info3, file=hOUT)
     hOUT.close()
 
 
@@ -321,18 +340,20 @@ def merge_bedpe1(annotate_bedpe, file_type, sv_hash):
 
             # get breakpint pair (chrA, posA, strandA, chrB, posB, strandB)
             chrA, chrB, posA, posB, strandA, strandB = F[0], F[3], F[10], F[11], F[8], F[9]
-            insert_seq = get_insert_seq(file_type, F, 12)
+            insert_seq = get_insert_seq(file_type, F, 12, None)
             
             sv_type = get_sv_type(F[13])
             is_bedpe2 = F[29] # the bp pair of Manta
             is_bedpe3 =F[30] # the bp pair of SvABA
+            is_bedpe4 =F[31] # the bp pair of GIRDSS
 
             chrA, posA, strandA, chrB, posB, strandB = sort_breakpoint(chrA, posA, strandA, chrB, posB, strandB)
 
-            val = chrA+','+posA+','+strandA+','+chrB+','+posB+','+strandB+','+insert_seq
-            val = (val+"\t---") if is_bedpe2 == "---" else (val+"\t"+is_bedpe2)
-            val = (val+"\t---") if is_bedpe3 == "---" else (val+"\t"+is_bedpe3)
-
+            val = chrA+','+posA+','+strandA+','+chrB+','+posB+','+strandB+','+insert_seq # GenomonSV
+            val = (val+"\t---") if is_bedpe2 == "---" else (val+"\t"+is_bedpe2) # Manta
+            val = (val+"\t---") if is_bedpe3 == "---" else (val+"\t"+is_bedpe3) # SvABA
+            val = (val+"\t---") if is_bedpe4 == "---" else (val+"\t"+is_bedpe4) # GRIDSS
+            
             if insert_seq == '': insert_seq = '---'
             
             key = chrA+'\t'+posA+'\t'+strandA+'\t'+chrB+'\t'+posB+'\t'+strandB+'\t'+insert_seq+'\t'+sv_type
@@ -357,25 +378,32 @@ def merge_bedpe2(annotate_bedpe, file_type, sv_hash, f_germ):
             chrA, posA, strandA, chrB, posB, strandB = sort_breakpoint(chrA, posA, strandA, chrB, posB, strandB)
 
             sv_type = F[10]
-            insert_seq = get_insert_seq(file_type, F, 18)
+            insert_seq = get_insert_seq(file_type, F, 18, None)
             if f_germ:
                 is_bedpe1 = F[22] # the bp pair of GenomonSV
                 is_bedpe3 =F[23] # the bp pair of SvABA
+                is_bedpe4 =F[24] # the bp pair of Gridss
             else:
                 is_bedpe1 = F[23] # the bp pair of GenomonSV
                 is_bedpe3 =F[24] # the bp pair of SvABA
+                is_bedpe4 =F[25] # the bp pair of GridSS
                 
-            
+        
+            # IF Genomon has already written this SV, continue
             if is_bedpe1 != "---": continue
+        
             if sv_type == "BND":
                 if strandA == strandB:
                     posB = str(int(get_homlen(infoB)) + int(posB))
             else:
                 if strandA == "-" and strandB == "+": posA = str(int(posA)+1)
                 if strandA == "+" and strandB == "-": posB = str(int(posB)+1)
+
             
-            val = "---\t" + chrA+','+posA+','+strandA+','+chrB+','+posB+','+strandB+','+insert_seq
-            val = (val+"\t---") if is_bedpe3 == "---" else (val+"\t"+is_bedpe3)
+            val = "---\t" # GenomonSV
+            val = val + chrA+','+posA+','+strandA+','+chrB+','+posB+','+strandB+','+insert_seq # Manta
+            val = (val+"\t---") if is_bedpe3 == "---" else (val+"\t"+is_bedpe3) # SvABA
+            val = (val+"\t---") if is_bedpe4 == "---" else (val+"\t"+is_bedpe4) # GRIDSS
             
             if insert_seq == '': insert_seq = '---'
             key = chrA+'\t'+posA+'\t'+strandA+'\t'+chrB+'\t'+posB+'\t'+strandB+'\t'+insert_seq+'\t'+sv_type
@@ -397,13 +425,15 @@ def merge_bedpe3(annotate_bedpe, file_type, sv_hash, f_germ):
             posA, posB = get_position(infoA, infoB)
 
             sv_type = F[10]
-            insert_seq = get_insert_seq(file_type, F, 18)
+            insert_seq = get_insert_seq(file_type, F, 18, None)
             if f_germ:
                 is_bedpe1 = F[22] # the bp pair of GenomonSV
                 is_bedpe2 =F[23] # the bp pair of Manta
+                is_bedpe4 =F[24] # the bp pair of GRIDSS
             else:
                 is_bedpe1 = F[23] # the bp pair of GenomonSV
                 is_bedpe2 =F[24] # the bp pair of Manta
+                is_bedpe4 =F[25] # the bp pair of GRIDSS
             
             # the original result file of SvABA has some probrem.
             # skip the record of error.
@@ -411,6 +441,7 @@ def merge_bedpe3(annotate_bedpe, file_type, sv_hash, f_germ):
             
             chrA, posA, strandA, chrB, posB, strandB = sort_breakpoint(chrA, posA, strandA, chrB, posB, strandB)
             
+            # IF Genomon or Manta have already written this SV, continue
             if is_bedpe1 != "---" or is_bedpe2 != "---" : continue
         
             if infoB == ".":
@@ -422,8 +453,53 @@ def merge_bedpe3(annotate_bedpe, file_type, sv_hash, f_germ):
                 else:
                     posB = str(int(posB) + int(homlen))
 
-            val = "---\t---\t" + chrA+','+posA+','+strandA+','+chrB+','+posB+','+strandB+','+insert_seq
+            val = "---\t" # GenomonSV
+            val = val + "---\t" # Manta
+            val = val + chrA+','+posA+','+strandA+','+chrB+','+posB+','+strandB+','+insert_seq # SvABA
+            val = (val+"\t---") if is_bedpe4 == "---" else (val+"\t"+is_bedpe4) # GRIDSS
 
+            if insert_seq == '': insert_seq = '---'
+            key = chrA+'\t'+posA+'\t'+strandA+'\t'+chrB+'\t'+posB+'\t'+strandB+'\t'+insert_seq+'\t'+sv_type
+            
+            sv_hash[key] = val
+    return sv_hash
+
+
+# GRIDSS
+def merge_bedpe4(annotate_bedpe, file_type, sv_hash, f_germ):
+
+    with open(annotate_bedpe, 'r') as hin:
+        for line in hin:
+            if line.startswith('#'): continue
+            F = line.rstrip('\n').split('\t')
+
+            # get breakpint pair (chrA, posA, strandA, chrB, posB, strandB)
+            chrA, chrB, strandA, strandB = F[0], F[3], F[8], F[9]
+            infoA, infoB = F[18], F[19]
+            posA, posB = get_position(infoA, infoB)
+
+            chrA, posA, strandA, chrB, posB, strandB = sort_breakpoint(chrA, posA, strandA, chrB, posB, strandB)
+
+            sv_type = F[10]
+            insert_seq = get_insert_seq(file_type, F, 18, 14)
+            if f_germ:
+                is_bedpe1 = F[22] # the bp pair of GenomonSV
+                is_bedpe2 = F[23] # the bp pair of Manta
+                is_bedpe3 =F[24] # the bp pair of SvABA
+            else:
+                is_bedpe1 = F[23] # the bp pair of GenomonSV
+                is_bedpe2 = F[24] # the bp pair of Manta
+                is_bedpe3 =F[25] # the bp pair of SvABA
+                
+            
+            # IF Genomon, Manta or SvABA have already written this SV, continue
+            if is_bedpe1 != "---" or is_bedpe2 != "---" or is_bedpe3 != "---" : continue
+            
+            val = "---\t" # GenomonSV
+            val = val + "---\t" # Manta
+            val = val + "---\t" # SvABA
+            val = val + chrA+','+posA+','+strandA+','+chrB+','+posB+','+strandB+','+insert_seq # GRIDSS
+            
             if insert_seq == '': insert_seq = '---'
             key = chrA+'\t'+posA+'\t'+strandA+'\t'+chrB+'\t'+posB+'\t'+strandB+'\t'+insert_seq+'\t'+sv_type
             
@@ -434,7 +510,7 @@ def merge_bedpe3(annotate_bedpe, file_type, sv_hash, f_germ):
 def print_result(in_txt, output):
 
     hOUT = open(output, 'w')
-    print("Chr_1\tPos_1\tDir_1\tChr_2\tPos_2\tDir_2\tInsert_Seq\tSV_Type\tis_Genomon\tis_Manta\tis_SvABA\tdist_to_exon\texon\tsv_size\tcount", file=hOUT)
+    print("Chr_1\tPos_1\tDir_1\tChr_2\tPos_2\tDir_2\tInsert_Seq\tSV_Type\tis_Genomon\tis_Manta\tis_SvABA\tis_GRIDSS\tdist_to_exon\texon\tsv_size\tcount", file=hOUT)
     with open(in_txt, 'r') as hin:
         for line in hin:
             line = line.rstrip('\n')
@@ -442,9 +518,9 @@ def print_result(in_txt, output):
             
             chrA, chrB = F[0], F[3]
             posA, posB = F[1], F[4]
-            l_anot = [F[8], F[9], F[10]]
-            size = int(posB) - int(posA) if chrA == chrB and posA != '' and posB != '' else ''
-            count = 3 - l_anot.count('---')
+            l_anot = [F[8], F[9], F[10], F[11]]
+            size = int(posB) - int(posA) -1 if chrA == chrB and posA != '' and posB != '' else ''
+            count = 4 - l_anot.count('---')
             
             print(line + "\t"+ str(size) + "\t"+ str(count), file=hOUT)
     hOUT.close()
@@ -496,9 +572,9 @@ def merge_SVs(args):
     out_pref, ext = os.path.splitext(args.output)
 
     # sort break point TODO
-    # sort_bp_bedpe(args.in_bedpe1, out_pref+".tmp1.sorted.bed", args.in_file_type1)
-    # sort_bp_bedpe(args.in_bedpe2, out_pref+".tmp2.sorted.bed", args.in_file_type2)
-    # sort_bp_bedpe(args.in_bedpe3, out_pref+".tmp3.sorted.bed", args.in_file_type3)
+    # sort_bp_bedpe(args.in_bedpe1, out_pref+".tmp1.sorted.bed", "GenomonSV")
+    # sort_bp_bedpe(args.in_bedpe2, out_pref+".tmp2.sorted.bed", "Manta")
+    # sort_bp_bedpe(args.in_bedpe3, out_pref+".tmp3.sorted.bed", "SvABA")
 
     hOUT = open(out_pref + ".tmp12.bedpe", 'w')
     subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe1, "-b", args.in_bedpe2], stdout = hOUT)
@@ -506,11 +582,17 @@ def merge_SVs(args):
     hOUT = open(out_pref + ".tmp13.bedpe", 'w')
     subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe1, "-b", args.in_bedpe3], stdout = hOUT)
     hOUT.close()
+    hOUT = open(out_pref + ".tmp14.bedpe", 'w')
+    subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe1, "-b", args.in_bedpe4], stdout = hOUT)
+    hOUT.close()
     hOUT = open(out_pref + ".tmp21.bedpe", 'w')
     subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe2, "-b", args.in_bedpe1], stdout = hOUT)
     hOUT.close()
     hOUT = open(out_pref + ".tmp23.bedpe", 'w')
     subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe2, "-b", args.in_bedpe3], stdout = hOUT)
+    hOUT.close()
+    hOUT = open(out_pref + ".tmp24.bedpe", 'w')
+    subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe2, "-b", args.in_bedpe4], stdout = hOUT)
     hOUT.close()
     hOUT = open(out_pref + ".tmp31.bedpe", 'w')
     subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe3, "-b", args.in_bedpe1], stdout = hOUT)
@@ -518,32 +600,51 @@ def merge_SVs(args):
     hOUT = open(out_pref + ".tmp32.bedpe", 'w')
     subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe3, "-b", args.in_bedpe2], stdout = hOUT)
     hOUT.close()
+    hOUT = open(out_pref + ".tmp34.bedpe", 'w')
+    subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe3, "-b", args.in_bedpe4], stdout = hOUT)
+    hOUT.close()
+    hOUT = open(out_pref + ".tmp41.bedpe", 'w')
+    subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe4, "-b", args.in_bedpe1], stdout = hOUT)
+    hOUT.close()
+    hOUT = open(out_pref + ".tmp42.bedpe", 'w')
+    subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe4, "-b", args.in_bedpe2], stdout = hOUT)
+    hOUT.close()
+    hOUT = open(out_pref + ".tmp43.bedpe", 'w')
+    subprocess.check_call(["bedtools", "pairtopair", "-a", args.in_bedpe4, "-b", args.in_bedpe3], stdout = hOUT)
+    hOUT.close()
 
-    sv_comp1 = makeHash(out_pref + ".tmp12.bedpe", args.in_file_type2, args.margin, 13, 29, 47)
-    sv_comp2 = makeHash(out_pref + ".tmp13.bedpe", args.in_file_type3, args.margin, 13, 29, 47)
-    annotate_other_sv(args.in_bedpe1, out_pref + ".tmp1.annotate.bedpe", sv_comp1, sv_comp2, args.margin)
+    sv_comp1 = makeHash(out_pref + ".tmp12.bedpe", "Manta", args.margin, 13, 29, 47, None)
+    sv_comp2 = makeHash(out_pref + ".tmp13.bedpe", "SvABA", args.margin, 13, 29, 47, None)
+    sv_comp3 = makeHash(out_pref + ".tmp14.bedpe", "GRIDSS", args.margin, 13, 29, 47, 43)
+    annotate_other_sv(args.in_bedpe1, out_pref + ".tmp1.annotate.bedpe", sv_comp1, sv_comp2, sv_comp3, args.margin)
     
     pair_idx = 22 if args.f_germ else 23
     info_gsv_idx = 34 if args.f_germ else 35
     info_bedpe_idx = 40 if args.f_germ else 41
+    alt_idx = 37
     
-    sv_comp1 = makeHash(out_pref + ".tmp21.bedpe", args.in_file_type1, args.margin, 10, pair_idx, info_gsv_idx)
-    sv_comp2 = makeHash(out_pref + ".tmp23.bedpe", args.in_file_type3, args.margin, 10, pair_idx, info_bedpe_idx)
-    sv_comp1 = makeHash(out_pref + ".tmp21.bedpe", args.in_file_type1, args.margin, 10, pair_idx, info_gsv_idx)
-    sv_comp2 = makeHash(out_pref + ".tmp23.bedpe", args.in_file_type3, args.margin, 10, pair_idx, info_bedpe_idx)
-    annotate_other_sv(args.in_bedpe2, out_pref + ".tmp2.annotate.bedpe", sv_comp1, sv_comp2, args.margin)
+    sv_comp1 = makeHash(out_pref + ".tmp21.bedpe", "GenomonSV", args.margin, 10, pair_idx, info_gsv_idx, None)
+    sv_comp2 = makeHash(out_pref + ".tmp23.bedpe", "SvABA", args.margin, 10, pair_idx, info_bedpe_idx, None)
+    sv_comp3 = makeHash(out_pref + ".tmp24.bedpe", "GRIDSS", args.margin, 10, pair_idx, info_bedpe_idx, alt_idx)
+    annotate_other_sv(args.in_bedpe2, out_pref + ".tmp2.annotate.bedpe", sv_comp1, sv_comp2, sv_comp3, args.margin)
 
-    sv_comp1 = makeHash(out_pref + ".tmp31.bedpe", args.in_file_type1, args.margin, 10, pair_idx, info_gsv_idx)
-    sv_comp2 = makeHash(out_pref + ".tmp32.bedpe", args.in_file_type2, args.margin, 10, pair_idx, info_bedpe_idx)
-    sv_comp1 = makeHash(out_pref + ".tmp31.bedpe", args.in_file_type1, args.margin, 10, pair_idx, info_gsv_idx)
-    sv_comp2 = makeHash(out_pref + ".tmp32.bedpe", args.in_file_type2, args.margin, 10, pair_idx, info_bedpe_idx)
-    annotate_other_sv(args.in_bedpe3, out_pref + ".tmp3.annotate.bedpe", sv_comp1, sv_comp2, args.margin)
+    sv_comp1 = makeHash(out_pref + ".tmp31.bedpe", "GenomonSV", args.margin, 10, pair_idx, info_gsv_idx, None)
+    sv_comp2 = makeHash(out_pref + ".tmp32.bedpe", "Manta", args.margin, 10, pair_idx, info_bedpe_idx, None)
+    sv_comp3 = makeHash(out_pref + ".tmp34.bedpe", "GRIDSS", args.margin, 10, pair_idx, info_bedpe_idx, alt_idx)
+    annotate_other_sv(args.in_bedpe3, out_pref + ".tmp3.annotate.bedpe", sv_comp1, sv_comp2, sv_comp3, args.margin)
+
+    sv_comp1 = makeHash(out_pref + ".tmp41.bedpe", "GenomonSV", args.margin, 10, pair_idx, info_gsv_idx, None)
+    sv_comp2 = makeHash(out_pref + ".tmp42.bedpe", "Manta", args.margin, 10, pair_idx, info_bedpe_idx, None)
+    sv_comp3 = makeHash(out_pref + ".tmp43.bedpe", "SvABA", args.margin, 10, pair_idx, info_bedpe_idx, None)
+    annotate_other_sv(args.in_bedpe4, out_pref + ".tmp4.annotate.bedpe", sv_comp1, sv_comp2, sv_comp3, args.margin)
 
     sv_hash = {}
-    sv_hash = merge_bedpe1(out_pref + ".tmp1.annotate.bedpe", args.in_file_type1, sv_hash)
-    sv_hash = merge_bedpe2(out_pref + ".tmp2.annotate.bedpe", args.in_file_type2, sv_hash, args.f_germ)
-    sv_hash = merge_bedpe3(out_pref + ".tmp3.annotate.bedpe", args.in_file_type3, sv_hash, args.f_germ)
-
+    sv_hash = merge_bedpe1(out_pref + ".tmp1.annotate.bedpe", "GenomonSV", sv_hash)
+    sv_hash = merge_bedpe2(out_pref + ".tmp2.annotate.bedpe", "Manta", sv_hash, args.f_germ)
+    sv_hash = merge_bedpe3(out_pref + ".tmp3.annotate.bedpe", "SvABA", sv_hash, args.f_germ)
+    sv_hash = merge_bedpe4(out_pref + ".tmp4.annotate.bedpe", "GRIDSS", sv_hash, args.f_germ)
+    
+    
     with open(out_pref + ".tmp.annotate.txt", 'w') as hOUT:
         for key in sv_hash:
             print(key +'\t'+ sv_hash[key], file=hOUT)
@@ -575,13 +676,20 @@ def merge_SVs(args):
 
     os.remove(out_pref + ".tmp12.bedpe")
     os.remove(out_pref + ".tmp13.bedpe")
+    os.remove(out_pref + ".tmp14.bedpe")
     os.remove(out_pref + ".tmp21.bedpe")
     os.remove(out_pref + ".tmp23.bedpe")
+    os.remove(out_pref + ".tmp24.bedpe")
     os.remove(out_pref + ".tmp31.bedpe")
     os.remove(out_pref + ".tmp32.bedpe")
+    os.remove(out_pref + ".tmp34.bedpe")
+    os.remove(out_pref + ".tmp41.bedpe")
+    os.remove(out_pref + ".tmp42.bedpe")
+    os.remove(out_pref + ".tmp43.bedpe")
     os.remove(out_pref + ".tmp1.annotate.bedpe")
     os.remove(out_pref + ".tmp2.annotate.bedpe")
     os.remove(out_pref + ".tmp3.annotate.bedpe")
+    os.remove(out_pref + ".tmp4.annotate.bedpe")
     os.remove(out_pref + ".tmp.annotate.txt")
     os.remove(out_pref + ".tmp.sorted.txt")
     os.remove(out_pref + ".tmp.merged.txt")

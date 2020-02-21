@@ -66,13 +66,21 @@ class TestMerge2SV(unittest.TestCase):
         self.assertEqual('12345678',ret)
         
     def test10(self):
-        F = ["AAAAAA","SVINSSEQ=CCCCCC;INSERTION=GGGGGG"]
-        ret = merge2.get_insert_seq("GenomonSV",F,0)
+        F = ["AAAAAA","SVINSSEQ=CCCCCC;INSERTION=GGGGGG","[chr1:123456[ACAC","ACAC]chr1:123456]","]chr1:123456]TGTG","TGTG[chr1:123456["]
+        ret = merge2.get_insert_seq("GenomonSV",F,0,None)
         self.assertEqual('AAAAAA',ret)
-        ret = merge2.get_insert_seq("Manta",F,1)
+        ret = merge2.get_insert_seq("Manta",F,1,None)
         self.assertEqual('CCCCCC',ret)
-        ret = merge2.get_insert_seq("SvABA",F,1)
+        ret = merge2.get_insert_seq("SvABA",F,1,None)
         self.assertEqual('GGGGGG',ret)
+        ret = merge2.get_insert_seq("GRIDSS",F,None,2)
+        self.assertEqual('ACA',ret)
+        ret = merge2.get_insert_seq("GRIDSS",F,None,3)
+        self.assertEqual('CAC',ret)
+        ret = merge2.get_insert_seq("GRIDSS",F,None,4)
+        self.assertEqual('TGT',ret)
+        ret = merge2.get_insert_seq("GRIDSS",F,None,5)
+        self.assertEqual('GTG',ret)
         
     def test11(self):
         chr1, dir1, chr2, dir2 = "1","+","1","+"
