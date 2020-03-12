@@ -1,6 +1,7 @@
 from __future__ import print_function 
 import os, sys
 import subprocess
+import pysam
 
 
 def get_inseq_from_bp(bp_pair):
@@ -507,10 +508,48 @@ def merge_bedpe4(annotate_bedpe, file_type, sv_hash, f_germ):
     return sv_hash
 
 
+
+def simple_repeat_check(chr, start, end, simple_repeat_tb):
+
+    sequence_array = []
+    # check junction annotation for refGene for the first break point
+    tabixErrorFlag = 0
+    try:
+        records = simple_repeat_tb.fetch(chr, int(start) - 1, int(end) + 1)
+    except Exception as inst:
+        print("%s: %s" % (type(inst), inst.args), file = sys.stderr)
+        tabixErrorFlag = 1
+
+    if tabixErrorFlag == 0:
+        for record_line in records:
+            record = record_line.split('\t')
+            if int(record[1]) <= int(start) + 1 and int(end) - 1 <= int(record[2]):
+                sequence_array.append(record[15])
+                
+    return ";".join(sequence_array)
+
+
+def get_simple_repeat(in_txt, output, simple_repeat_info):
+
+    hOUT = open(output, 'w')
+    with open(in_txt, 'r') as hin:
+        for line in hin:
+            line = line.rstrip('\n')
+            F = line.split('\t')
+            
+            chrA, chrB = F[0], F[3]
+            posA, posB = F[1], F[4]
+            simple_repeat_tb = pysam.TabixFile(simple_repeat_info)
+            simpleA = simple_repeat_check(chrA, posA, posA, simple_repeat_tb)
+            simpleB = simple_repeat_check(chrB, posB, posB, simple_repeat_tb)
+            
+            print(line + "\t"+ str(simpleA) + "\t"+ str(simpleB), file=hOUT)
+    hOUT.close()
+
 def print_result(in_txt, output):
 
     hOUT = open(output, 'w')
-    print("Chr_1\tPos_1\tDir_1\tChr_2\tPos_2\tDir_2\tInsert_Seq\tSV_Type\tis_Genomon\tis_Manta\tis_SvABA\tis_GRIDSS\tdist_to_exon\texon\tsv_size\tcount", file=hOUT)
+    print("Chr_1\tPos_1\tDir_1\tChr_2\tPos_2\tDir_2\tInserted_Seq\tVariant_Type\tis_Genomon\tis_Manta\tis_SvABA\tis_GRIDSS\tdist_to_exon\texon\tSimpleRepeat_1\tSimpleRepeat_2\tsv_size\tcount\tGene_1\tGene_2\tExon_1\tExon_2", file=hOUT)
     with open(in_txt, 'r') as hin:
         for line in hin:
             line = line.rstrip('\n')
@@ -522,7 +561,7 @@ def print_result(in_txt, output):
             size = int(posB) - int(posA) -1 if chrA == chrB and posA != '' and posB != '' else ''
             count = 4 - l_anot.count('---')
             
-            print(line + "\t"+ str(size) + "\t"+ str(count), file=hOUT)
+            print(line + "\t"+ str(size) + "\t"+ str(count) +"\t\t\t\t", file=hOUT)
     hOUT.close()
 
 
@@ -658,7 +697,7 @@ def merge_SVs(args):
     hOUT = open(out_pref + ".tmp.sorted2.txt", 'w')
     subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k4,4", "-k5,5n", out_pref + ".tmp.merged.txt"],  stdout = hOUT)
     hOUT.close()
-    
+
     cmd = []
     if args.genome_id == "hg19":
         if args.f_grc:
@@ -671,8 +710,24 @@ def merge_SVs(args):
         else:
             cmd = ["sv_utils", "annotation", "--genome_id", "hg38", "--closest_exon", "--grc", out_pref + ".tmp.sorted2.txt", out_pref + ".tmp.exon.txt"]
     subprocess.check_call(cmd)
+
+    get_simple_repeat(out_pref + ".tmp.exon.txt", out_pref + ".tmp.simple.txt", args.simple_repeat_file)
+
+    print_result(out_pref + ".tmp.simple.txt", out_pref + ".tmp.exon2.txt")
     
-    print_result(out_pref + ".tmp.exon.txt", args.output)
+    if args.genome_id == "hg19":
+        if args.f_grc:
+            cmd = ["sv_utils", "annotation", "--re_gene_annotation", out_pref + ".tmp.exon2.txt", args.output]
+        else:
+            cmd = ["sv_utils", "annotation", "--re_gene_annotation", "--grc", out_pref + ".tmp.exon2.txt", args.output]
+    elif args.genome_id == "hg38":
+        if args.f_grc:
+            cmd = ["sv_utils", "annotation", "--genome_id", "hg38", "--re_gene_annotation", out_pref + ".tmp.exon2.txt", args.output]
+        else:
+            cmd = ["sv_utils", "annotation", "--genome_id", "hg38", "--re_gene_annotation", "--grc", out_pref + ".tmp.exon2.txt", args.output]
+    subprocess.check_call(cmd)
+
+
 
     os.remove(out_pref + ".tmp12.bedpe")
     os.remove(out_pref + ".tmp13.bedpe")
@@ -693,6 +748,6 @@ def merge_SVs(args):
     os.remove(out_pref + ".tmp.annotate.txt")
     os.remove(out_pref + ".tmp.sorted.txt")
     os.remove(out_pref + ".tmp.merged.txt")
-    os.remove(out_pref + ".tmp.sorted2.txt")
-    os.remove(out_pref + ".tmp.exon.txt")
+    # os.remove(out_pref + ".tmp.sorted2.txt")
+    # os.remove(out_pref + ".tmp.exon.txt")
     
