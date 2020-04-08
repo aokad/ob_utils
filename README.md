@@ -18,6 +18,15 @@ python setup.py install
 ## Commands
 
 ```
+ob_utils manta_sv [-h] --in_manta_sv IN_MANTA_SV --output OUTPUT
+                         [--margin MARGIN] [--f_grc]
+```
+```
+	ob_utils gridss_sv [-h] --in_gridss_sv IN_GRIDSS_SV --output OUTPUT
+                          [--margin MARGIN] [--f_grc]
+  
+```
+```
 ob_utils comp [-h] --in_onebreak IN_ONEBREAK --in_genomonsv
                  IN_GENOMONSV --output OUTPUT [--margin MARGIN]
 ```
