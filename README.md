@@ -8,6 +8,7 @@ Python (>=2.7)
 
 ### Software
 [bedtools](http://bedtools.readthedocs.org/en/latest/)
+[svtools](https://github.com/hall-lab/svtools.git)
 
 ## Install
 
