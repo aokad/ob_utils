@@ -4,7 +4,7 @@ Python programs for analyzing onebreak results.
 ## Dependency
 
 ### Python
-Python (>= 2.7, >= 3.6)
+Python (>=2.7)
 
 ### Software
 [bedtools](http://bedtools.readthedocs.org/en/latest/)
