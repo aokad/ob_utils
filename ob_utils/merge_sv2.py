@@ -2,6 +2,7 @@ from __future__ import print_function
 import os, sys
 import subprocess
 import pysam
+import re
 
 
 def get_inseq_from_bp(bp_pair):
@@ -546,10 +547,50 @@ def get_simple_repeat(in_txt, output, simple_repeat_info):
             print(line + "\t"+ str(simpleA) + "\t"+ str(simpleB), file=hOUT)
     hOUT.close()
 
+
+def makeReference(chr,start,end,dir, reference_genome, window_size=20):
+
+    seq = ""
+    range = ""
+    if dir == "+":
+        range = chr + ":" + str(int(start) - window_size) +"-"+ end
+    else:
+        range = chr + ":" + str(int(start)+1) +"-"+ str(int(end) + window_size + 1)
+    
+    for item in pysam.faidx(reference_genome, range):
+        seq = seq + item.rstrip('\n').upper()
+    seq = seq.replace('>', '')
+    seq = seq.replace(range.upper(), '')
+
+    if re.search(r'[^ACGTUWSMKRYBDHVN]', seq) is not None:
+        print("The return value in get_seq function includes non-nucleotide characters:", file=sys.stderr)
+        print(seq, file=sys.stderr)
+        sys.exit(1)
+
+    return seq
+    
+def get_reference_seq(in_txt, output, reference_genome):
+
+    hOUT = open(output, 'w')
+    with open(in_txt, 'r') as hin:
+        for line in hin:
+            line = line.rstrip('\n')
+            F = line.split('\t')
+            
+            chrA, chrB = F[0], F[3]
+            posA, posB = F[1], F[4]
+            dirA, dirB = F[2], F[5]
+            
+            referenceA = makeReference(chrA, posA, posA, dirA, reference_genome)
+            referenceB = makeReference(chrB, posB, posB, dirB, reference_genome)
+            
+            print(line + "\t"+ str(referenceB) + "\t"+ str(referenceA), file=hOUT)
+    hOUT.close()
+
 def print_result(in_txt, output):
 
     hOUT = open(output, 'w')
-    print("Chr_1\tPos_1\tDir_1\tChr_2\tPos_2\tDir_2\tInserted_Seq\tVariant_Type\tis_Genomon\tis_Manta\tis_SvABA\tis_GRIDSS\tdist_to_exon\texon\tSimpleRepeat_1\tSimpleRepeat_2\tsv_size\tcount\tGene_1\tGene_2\tExon_1\tExon_2", file=hOUT)
+    print("Chr_1\tPos_1\tDir_1\tChr_2\tPos_2\tDir_2\tInserted_Seq\tVariant_Type\tIs_Genomon\tIs_Manta\tIs_SvABA\tIs_GRIDSS\tDist_To_Exon\tExon\tSimpleRepeat_1\tSimpleRepeat_2\tContig_1\tContig_2\tSV_Size\tDetection_Count\tGene_1\tGene_2\tExon_1\tExon_2", file=hOUT)
     with open(in_txt, 'r') as hin:
         for line in hin:
             line = line.rstrip('\n')
@@ -558,7 +599,7 @@ def print_result(in_txt, output):
             chrA, chrB = F[0], F[3]
             posA, posB = F[1], F[4]
             l_anot = [F[8], F[9], F[10], F[11]]
-            size = int(posB) - int(posA) -1 if chrA == chrB and posA != '' and posB != '' else ''
+            size = int(posB) - int(posA) -1 if chrA == chrB and posA != '' and posB != '' else '---'
             count = 4 - l_anot.count('---')
             
             print(line + "\t"+ str(size) + "\t"+ str(count) +"\t\t\t\t", file=hOUT)
@@ -713,7 +754,9 @@ def merge_SVs(args):
 
     get_simple_repeat(out_pref + ".tmp.exon.txt", out_pref + ".tmp.simple.txt", args.simple_repeat_file)
 
-    print_result(out_pref + ".tmp.simple.txt", out_pref + ".tmp.exon2.txt")
+    get_reference_seq(out_pref + ".tmp.simple.txt", out_pref + ".tmp.sequence.txt", args.reference)
+
+    print_result(out_pref + ".tmp.sequence.txt", out_pref + ".tmp.exon2.txt")
     
     if args.genome_id == "hg19":
         if args.f_grc:
