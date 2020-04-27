@@ -1,5 +1,5 @@
 # ob_utils
-Python programs for analyzing onebreak results.
+Merge SV results detected by multiple tools.
 
 ## Dependency
 
@@ -7,8 +7,9 @@ Python programs for analyzing onebreak results.
 Python (>=3.7)
 
 ### Software
-[bedtools](http://bedtools.readthedocs.org/en/latest/)
-[sv_utils](https://github.com/friend1ws/sv_utils)(>=0.6.1)
+[bedtools](http://bedtools.readthedocs.org/en/latest/),
+[sv_utils](https://github.com/friend1ws/sv_utils)(>=0.6.1),
+pysam
 
 ## Install
 
