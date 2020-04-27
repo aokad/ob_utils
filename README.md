@@ -42,24 +42,22 @@ ob_utils genomon_sv [-h] --in_genomon_sv IN_GENOMON_SV --output OUTPUT
                            [--margin MARGIN] [--f_grc]
 ```
 ```
-ob_utils comp [-h] --in_onebreak IN_ONEBREAK --in_genomonsv
-                 IN_GENOMONSV --output OUTPUT [--margin MARGIN]
-```
-```
-ob_utils merge [-h] --in_onebreak_filt1 IN_ONEBREAK_FILT1
-                 --in_onebreak_filt2 IN_ONEBREAK_FILT2 --output OUTPUT
+ob_utils merge_sv [-h] --in_genomonsv IN_GENOMONSV --in_manta IN_MANTA
+                         --in_svaba IN_SVABA --in_gridss IN_GRIDSS --output
+                         OUTPUT [--margin MARGIN] [--f_grc] [--f_germ]
+                         --simple_repeat_file SIMPLE_REPEAT_FILE --reference
+                         REFERENCE [--genome_id {hg19,hg38}]
 ```
 
 You can check the manual by typing
 ```
-ob_utils comp -h
+ob_utils manta_sv -h
 ```
 ```
-ob_utils merge -h
+ob_utils merge_sv -h
 ```
 
 ## Results
 
 The primary result is {OUTPUT}
 
-    GenomonSV: Matched GenomonSV result
