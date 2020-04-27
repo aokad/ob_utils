@@ -93,10 +93,10 @@ def create_parser():
     def _merge_sv_parser(subparsers):
         
         merge_svs_parser = subparsers.add_parser("merge_sv", help = "merge bedpe files")
-        merge_svs_parser.add_argument("--in_bedpe1", help = "the bedpe format file (GenomonSV)", type = str, required=True)
-        merge_svs_parser.add_argument("--in_bedpe2", help = "the bedpe format file (Manta)", type = str, required=True)
-        merge_svs_parser.add_argument("--in_bedpe3", help = "the bedpe format file (SvABA)", type = str, required=True)
-        merge_svs_parser.add_argument("--in_bedpe4", help = "the bedpe format file (GRIDSS)", type = str)
+        merge_svs_parser.add_argument("--in_genomonsv", help = "the bedpe format file (GenomonSV)", type = str, required=True)
+        merge_svs_parser.add_argument("--in_manta", help = "the bedpe format file (Manta)", type = str, required=True)
+        merge_svs_parser.add_argument("--in_svaba", help = "the bedpe format file (SvABA)", type = str, required=True)
+        merge_svs_parser.add_argument("--in_gridss", help = "the bedpe format file (GRIDSS)", type = str, required=True)
         merge_svs_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
         merge_svs_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
         merge_svs_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False ) 
