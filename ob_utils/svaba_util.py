@@ -4,6 +4,7 @@ import subprocess
 from .margin_bedpe import give_margin_bedpe
 from .filter_bedpe import filter_scaffold
 from .repair_bedpe import repair_dup_strand
+from .svtools.vcftobedpe import run_vcf2bedpe 
 
 def SvABASVtoBedpe(input_vcf, output, margin, f_grc, normal_max_variant_read, 
     tumor_min_variant_read, tumor_min_depth, normal_min_depth, f_germ):
@@ -20,7 +21,8 @@ def SvABASVtoBedpe(input_vcf, output, margin, f_grc, normal_max_variant_read,
     command.append(out_pref + ".tmp1.vcf")
     subprocess.check_call(command)
 
-    subprocess.check_call(["svtools", "vcftobedpe", "-i", out_pref + ".tmp2.vcf", "-o", out_pref + ".tmp2.bedpe"])
+    # subprocess.check_call(["svtools", "vcftobedpe", "-i", out_pref + ".tmp2.vcf", "-o", out_pref + ".tmp2.bedpe"])
+    run_vcf2bedpe(out_pref + ".tmp2.vcf", out_pref + ".tmp2.bedpe")
 
     give_margin_bedpe(out_pref + ".tmp2.bedpe", out_pref + ".tmp3.bedpe", margin)
     filter_scaffold(out_pref + ".tmp3.bedpe", out_pref + ".sv.bedpe", f_grc)
@@ -87,7 +89,8 @@ def SvABAIndeltoBedpe(input_vcf, output, margin, f_grc, normal_max_variant_read,
     
     filter_indel_vcf(out_pref + ".indel.tmp2.vcf", out_pref + ".indel.tmp3.vcf", min_del_size, min_ins_size)
 
-    subprocess.check_call(["svtools", "vcftobedpe", "-i", out_pref + ".indel.tmp3.vcf", "-o", out_pref + ".indel.tmp3.bedpe"])
+    # subprocess.check_call(["svtools", "vcftobedpe", "-i", out_pref + ".indel.tmp3.vcf", "-o", out_pref + ".indel.tmp3.bedpe"])
+    run_vcf2bedpe(out_pref + ".indel.tmp3.vcf", out_pref + ".indel.tmp3.bedpe")
 
     give_margin_bedpe(out_pref + ".indel.tmp3.bedpe", out_pref + ".indel.tmp4.bedpe", margin)
     filter_scaffold(out_pref + ".indel.tmp4.bedpe", out_pref + ".indel.tmp5.bedpe", f_grc)

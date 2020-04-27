@@ -1,5 +1,8 @@
 ob_utils
 
+Released under the MIT License.
+https://github.com/ken0-1n/ob_utils/blob/master/LICENSE
+
 MIT License
 
 Copyright (c) 2019 Ken-ichi Chiba
@@ -22,8 +25,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-********************************************************************************
+
+*****************************************
 svtools 0.5.1
+
+Released under the MIT License.
+https://github.com/hall-lab/svtools/blob/master/LICENSE.txt
 
 MIT License
 
@@ -46,4 +53,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
