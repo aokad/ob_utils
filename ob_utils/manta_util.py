@@ -5,13 +5,14 @@ from .filter_bedpe import filter_scaffold
 from .repair_bedpe import repair_dup_strand
 from .svtools.vcftobedpe import run_vcf2bedpe 
 
-def mantaSVtoBedpe(input_vcf, output, margin, f_grc):
+def mantaSVtoBedpe(input_vcf, output, margin, f_grc, bcf_filter_option):
 
     out_pref, ext = os.path.splitext(output)
 
-    subprocess.check_call(["bcftools", "view", "-o", out_pref + ".tmp1.vcf", "-f", "PASS", input_vcf])
-
-    # subprocess.check_call(["svtools", "vcftobedpe", "-i", out_pref + ".tmp1.vcf", "-o", out_pref + ".tmp1.bedpe"])
+    if bcf_filter_option != "":
+        subprocess.check_call(["bcftools", "view", "-o", out_pref + ".tmp1.vcf", "-f", bcf_filter_option, input_vcf])
+    else:
+        subprocess.check_call(["bcftools", "view", "-o", out_pref + ".tmp1.vcf", input_vcf])
     run_vcf2bedpe(out_pref + ".tmp1.vcf", out_pref + ".tmp1.bedpe")
 
     give_margin_bedpe(out_pref + ".tmp1.bedpe", out_pref + ".tmp2.bedpe", margin)
@@ -30,6 +31,6 @@ def mantaSVtoBedpe(input_vcf, output, margin, f_grc):
 
 def mantaSVtoBedpe_main(args):
 
-    mantaSVtoBedpe(args.in_manta_sv, args.output, args.margin, args.f_grc)
+    mantaSVtoBedpe(args.in_manta_sv, args.output, args.margin, args.f_grc, args.bcf_filter_option)
 
     

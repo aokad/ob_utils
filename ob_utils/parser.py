@@ -59,6 +59,7 @@ def create_parser():
         manta_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
         manta_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
         manta_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        manta_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
         return manta_parser
     
     
@@ -69,6 +70,7 @@ def create_parser():
         gridss_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
         gridss_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
         gridss_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        gridss_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
         return gridss_parser
         
     
