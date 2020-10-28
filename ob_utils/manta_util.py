@@ -1,11 +1,11 @@
 import os, sys
-import subprocess
+import subprocess, shutil
 from .margin_bedpe import give_margin_bedpe
 from .filter_bedpe import filter_scaffold
 from .repair_bedpe import repair_dup_strand
 from .svtools.vcftobedpe import run_vcf2bedpe 
 
-def mantaSVtoBedpe(input_vcf, output, margin, f_grc, bcf_filter_option):
+def mantaSVtoBedpe(input_vcf, output, margin, f_grc, bcf_filter_option, filter_scaffold_option):
 
     out_pref, ext = os.path.splitext(output)
 
@@ -16,7 +16,12 @@ def mantaSVtoBedpe(input_vcf, output, margin, f_grc, bcf_filter_option):
     run_vcf2bedpe(out_pref + ".tmp1.vcf", out_pref + ".tmp1.bedpe")
 
     give_margin_bedpe(out_pref + ".tmp1.bedpe", out_pref + ".tmp2.bedpe", margin)
-    filter_scaffold(out_pref + ".tmp2.bedpe", out_pref + ".tmp3.bedpe", f_grc)
+    
+    if filter_scaffold_option:
+        filter_scaffold(out_pref + ".tmp2.bedpe", out_pref + ".tmp3.bedpe", f_grc)
+    else:
+        shutil.copyfile(out_pref + '.tmp2.bedpe', out_pref + '.tmp3.bedpe')
+        
     repair_dup_strand(out_pref + ".tmp3.bedpe", out_pref + ".tmp4.bedpe")
 
     hOUT = open(output, 'w')
@@ -30,7 +35,6 @@ def mantaSVtoBedpe(input_vcf, output, margin, f_grc, bcf_filter_option):
     os.remove(out_pref + ".tmp4.bedpe")
 
 def mantaSVtoBedpe_main(args):
-
-    mantaSVtoBedpe(args.in_manta_sv, args.output, args.margin, args.f_grc, args.bcf_filter_option)
+    mantaSVtoBedpe(args.in_manta_sv, args.output, args.margin, args.f_grc, args.bcf_filter_option, args.filter_scaffold_option)
 
     

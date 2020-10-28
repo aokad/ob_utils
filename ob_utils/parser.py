@@ -60,6 +60,7 @@ def create_parser():
         manta_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
         manta_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
         manta_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
+        manta_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
         return manta_parser
     
     
@@ -71,6 +72,9 @@ def create_parser():
         gridss_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
         gridss_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
         gridss_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
+        gridss_parser.add_argument("--debug", default = False, action = 'store_true', help = "keep intermediate files")
+        gridss_parser.add_argument("--singleend_sv", default = False, action = 'store_true', help = "analysis single end SV")
+        gridss_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
         return gridss_parser
         
     
