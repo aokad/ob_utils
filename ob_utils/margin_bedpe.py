@@ -13,10 +13,10 @@ def give_margin_bedpe(bedpe_file, output, margin):
             line = line.rstrip('\n')
             F = line.split('\t')
             chrA = F[0]
-            startA = str(int(F[1]) - margin)
+            startA = str(max(0,int(F[1]) - margin))
             endA = str(int(F[2]) + margin)
             chrB = F[3]
-            startB = str(int(F[4]) - margin)
+            startB = str(max(0,int(F[4]) - margin))
             endB = str(int(F[5]) + margin)
             print(chrA+'\t'+startA+'\t'+endA+'\t'+chrB+'\t'+startB+'\t'+endB+'\t'+ '\t'.join(F[6:]), file=hOUT)
     hOUT.close()       
