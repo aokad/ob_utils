@@ -14,6 +14,8 @@ from .genomonsv_util import genomonSVtoBedpe_main
 from .manta_util import mantaSVtoBedpe_main
 from .gridss_util import gridssSVtoBedpe_main
 from .svaba_util import svabaSVtoBedpe_main
+from .sniffles_util import snifflesSVtoBedpe_main
+from .svim_util import svimSVtoBedpe_main
 from .merge_sv2 import merge_SVs
 from .liftover_trafic import liftover_trafic_main
 
@@ -96,6 +98,36 @@ def create_parser():
         return svaba_parser
 
 
+    def _create_sniffles_util_parser(subparsers):
+        
+        sniffles_parser = subparsers.add_parser("sniffles_sv", help = "convert the sniffles sv format to BEDPE file")
+        sniffles_parser.add_argument("--in_sniffles_tumor_sv", help = "the vcf format file", type = str, required=True)
+        sniffles_parser.add_argument("--in_sniffles_control_sv", help = "the vcf format file", type = str, required=True)
+        sniffles_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
+        sniffles_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 50)
+        sniffles_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        sniffles_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
+        sniffles_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
+        sniffles_parser.add_argument("--min_tumor_support_read", help = "minimum tumor support reads", type = int, default = 3)
+        sniffles_parser.add_argument("--min_control_support_read", help = "minimum control support reads", type = int, default = 1)
+
+        return sniffles_parser
+
+
+    def _create_svim_util_parser(subparsers):
+        
+        svim_parser = subparsers.add_parser("svim_sv", help = "convert the svim sv format to BEDPE file")
+        svim_parser.add_argument("--in_svim_tumor_sv", help = "the vcf format file", type = str, required=True)
+        svim_parser.add_argument("--in_svim_control_sv", help = "the vcf format file", type = str, required=True)
+        svim_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
+        svim_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 50)
+        svim_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        svim_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
+        svim_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
+        svim_parser.add_argument("--min_tumor_support_read", help = "minimum tumor support reads", type = int, default = 3)
+        svim_parser.add_argument("--min_control_support_read", help = "minimum control support reads", type = int, default = 1)
+        return svim_parser
+
     def _merge_sv_parser(subparsers):
         
         merge_svs_parser = subparsers.add_parser("merge_sv", help = "merge bedpe files")
@@ -135,6 +167,10 @@ def create_parser():
     gridss_parser.set_defaults(func = gridssSVtoBedpe_main)
     svaba_parser = _create_svaba_util_parser(subparsers)
     svaba_parser.set_defaults(func = svabaSVtoBedpe_main)
+    sniffles_parser = _create_sniffles_util_parser(subparsers)
+    sniffles_parser.set_defaults(func = snifflesSVtoBedpe_main)
+    svim_parser = _create_svim_util_parser(subparsers)
+    svim_parser.set_defaults(func = svimSVtoBedpe_main)
     merge_svs_parser = _merge_sv_parser(subparsers)
     merge_svs_parser.set_defaults(func = merge_SVs)
     lo_trafic_parser = _liftover_trafic_parser(subparsers)
