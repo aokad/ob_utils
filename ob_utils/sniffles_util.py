@@ -40,13 +40,13 @@ def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedp
             F = line.rstrip('\n').split('\t')
             tchr1, tstart1, tend1, tchr2, tstart2, tend2 = F[0], str(int(F[1])-1), F[2], F[3], str(int(F[4])-1), F[5]
             tdir1, tdir2 = F[8], F[9]
-            infoA = F[18]
-            support_read = utils.get_info_val(infoA, "RE")
+            info1, info2 = F[18], F[19]
+            support_read = utils.get_info_val(info1, "RE")
             if int(support_read) < min_support_read: continue
 
             sort_flag = utils.sort_breakpoint_main(tchr1,tstart1,tchr2,tstart2,h_chrom_number)
             if not sort_flag:
-                tchr1, tstart1, tend1, tdir1, tchr2, tstart2, tend2, tdir2 = tchr2, tstart2, tend2, tdir2, tchr1, tstart1, tend1, tdir1
+                tchr1, tstart1, tend1, tdir1, info1, tchr2, tstart2, tend2, tdir2, info2 = tchr2, tstart2, tend2, tdir2, info2, tchr1, tstart1, tend1, tdir1, info1
 
             control_flag = False
             tabix_error_flag = False
@@ -89,7 +89,6 @@ def simplify_sniffles(in_control_bedpe, min_support_read, hout, h_chrom_number):
                 tchr1, tstart1, tend1, tdir1, tchr2, tstart2, tend2, tdir2 = tchr2, tstart2, tend2, tdir2, tchr1, tstart1, tend1, tdir1
 
             l_bed_record = [tchr1, str(int(tstart1)-1), tend1, tchr2, str(int(tstart2)-1), tend2, ".", ".", tdir1, tdir2]
-
             print('\t'.join(l_bed_record), file = hout)
             
             

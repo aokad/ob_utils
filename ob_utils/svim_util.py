@@ -29,27 +29,24 @@ def svimSVtoBedpe(input_vcf, output, f_grc, filter_scaffold_option, bcf_filter_o
     os.remove(out_pref + ".tmp1.bedpe")
     os.remove(out_pref + ".tmp2.bedpe")
 
+
 def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedpe, control_check_margin, min_support_read,h_chrom_number):
 
     hout = open(output_file, 'w')
     control_junction_db = pysam.TabixFile(control_junction_bedpe)
 
-    l_key = []    
     with open(input_file, 'r') as hin:
         for line in hin:
             F = line.rstrip('\n').split('\t')
             tchr1, tstart1, tend1, tchr2, tstart2, tend2 = F[0], str(int(F[1])-1), F[2], F[3], str(int(F[4])-1), F[5]
             tdir1, tdir2 = F[8], F[9]
-            infoA = F[18]
-            support_read = utils.get_info_val(infoA, "SUPPORT")
+            info1, info2 = F[18], F[19]
+            support_read = utils.get_info_val(info1, "SUPPORT")
             if int(support_read) < min_support_read: continue
 
             sort_flag = utils.sort_breakpoint_main(tchr1,tstart1,tchr2,tstart2,h_chrom_number)
             if not sort_flag:
-                tchr1, tstart1, tend1, tdir1, tchr2, tstart2, tend2, tdir2 = tchr2, tstart2, tend2, tdir2, tchr1, tstart1, tend1, tdir1
-            current_key = tchr1+"\t"+tend1+"\t"+tdir1+"\t"+tchr2+"\t"+tend2+"\t"+tdir2
-        
-            if current_key in l_key: continue
+                tchr1, tstart1, tend1, tdir1, info1, tchr2, tstart2, tend2, tdir2, info2 = tchr2, tstart2, tend2, tdir2, info2, tchr1, tstart1, tend1, tdir1, info1
 
             control_flag = False
             tabix_error_flag = False
@@ -73,20 +70,16 @@ def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedp
             if not control_flag:
                 print('\t'.join(F), file = hout)
 
-            l_key.append(current_key)
     hout.close()
-    
     
 
 def simplify_svim(in_control_bedpe, min_support_read, hout, h_chrom_number):
 
-    l_key = []
     with open(in_control_bedpe, 'r') as hin:
         for line in hin:
             F = line.rstrip('\n').split('\t')
-
-            tchr1, tstart1, tend1, tchr2, tstart2, tend2 = F[0], str(int(F[1])-1), F[2], F[3], str(int(F[4])-1), F[5]
-            tdir1, tdir2 = F[8], F[9]
+            
+            tchr1, tstart1, tend1, tchr2, tstart2, tend2, tdir1, tdir2 = F[0], F[1], F[2], F[3], F[4], F[5], F[8], F[9]
             info1 = F[18]
             support_read = utils.get_info_val(info1, "SUPPORT")
             if int(support_read) < min_support_read: continue
@@ -95,16 +88,22 @@ def simplify_svim(in_control_bedpe, min_support_read, hout, h_chrom_number):
             if not sort_flag:
                 tchr1, tstart1, tend1, tdir1, tchr2, tstart2, tend2, tdir2 = tchr2, tstart2, tend2, tdir2, tchr1, tstart1, tend1, tdir1
 
-            current_key =tchr1+'\t'+tstart1+'\t'+tend1+'\t'+tdir1+'\t'+tchr2+'\t'+tstart2+'\t'+tend2+'\t'+tdir2
-
-            if current_key in l_key:
-                continue
-            
             l_bed_record = [tchr1, str(int(tstart1)-1), tend1, tchr2, str(int(tstart2)-1), tend2, ".", ".", tdir1, tdir2]
             print('\t'.join(l_bed_record), file = hout)
-            l_key.append(current_key)
             
-            
+
+def unique_control_svim(in_control_bedpe, hout):
+
+    l_all_line = []
+    with open(in_control_bedpe, 'r') as hin:
+        for line in hin:
+            line = line.rstrip('\n')
+            l_all_line.append(line)
+    
+    for line in set(l_all_line):
+        print(line, file=hout)
+
+
 def svimSVtoBedpe_main(args):
     
     in_tumor_sv = args.in_svim_tumor_sv
@@ -129,7 +128,10 @@ def svimSVtoBedpe_main(args):
     with open(output_prefix+'.svim_control_simplify.bedpe', 'w') as hout:
         simplify_svim(output_prefix+'.svim_control_PASS.bedpe', min_control_support_read, hout, h_chrom_number)
 
-    with open( output_prefix +'.svim_control_sorted.bedpe', 'w') as hout:
+    # with open(output_prefix+'.svim_control_simplify_bedpe', 'w') as hout:
+    #    unique_control_svim(output_prefix+'.svim_control_simplify_tmp.bedpe', hout)
+
+    with open(output_prefix +'.svim_control_sorted.bedpe', 'w') as hout:
         subprocess.check_call(['sort', '-k1,1', '-k2,2n', '-k4,4', '-k5,5n',  output_prefix +'.svim_control_simplify.bedpe'],  stdout = hout)
 
     with open(output_prefix +'.svim_control_sorted.bedpe.gz', "w") as hout:
