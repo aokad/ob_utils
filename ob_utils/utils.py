@@ -64,6 +64,16 @@ def get_info_val(infos, key):
             ret = info.split("=")[1]
             break
     return ret
+    
+def get_format_val(format_keys, format_vals, key):
+    ret = ""
+    l_format_keys = format_keys.split(':')
+    l_format_vals = format_vals.split(':')
+    for index, format_key in enumerate(l_format_keys):
+        if format_key == key:
+            ret = l_format_vals[index]
+            break
+    return ret
 
 
 def sort_breakpoint(chr1,pos1,dir1,chr2,pos2,dir2,h_chrom_number):

@@ -109,7 +109,10 @@ def create_parser():
         sniffles_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
         sniffles_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
         sniffles_parser.add_argument("--min_tumor_support_read", help = "minimum tumor support reads", type = int, default = 3)
-        sniffles_parser.add_argument("--min_control_support_read", help = "minimum control support reads", type = int, default = 1)
+        sniffles_parser.add_argument("--max_control_support_read", help = "maximum control support reads", type = int, default = 1)
+        sniffles_parser.add_argument("--min_sv_length", help = "minimum sv length", type = int, default = 1)
+        sniffles_parser.add_argument("--debug", default = False, action = 'store_true', help = "keep intermediate files")
+                                    
 
         return sniffles_parser
 
@@ -125,7 +128,10 @@ def create_parser():
         svim_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
         svim_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
         svim_parser.add_argument("--min_tumor_support_read", help = "minimum tumor support reads", type = int, default = 3)
-        svim_parser.add_argument("--min_control_support_read", help = "minimum control support reads", type = int, default = 1)
+        svim_parser.add_argument("--max_control_support_read", help = "maximum control support reads", type = int, default = 1)
+        svim_parser.add_argument("--min_sv_length", help = "minimum sv length", type = int, default = 1)
+        svim_parser.add_argument("--debug", default = False, action = 'store_true', help = "keep intermediate files")
+
         return svim_parser
 
     def _merge_sv_parser(subparsers):
