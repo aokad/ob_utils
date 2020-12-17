@@ -7,6 +7,7 @@ from ob_utils.utils import make_chrom_number_dict
 from ob_utils.sniffles_util import snifflesSVtoBedpe
 from ob_utils.sniffles_util import simplify_sniffles
 from ob_utils.sniffles_util import filt_clustered_rearrangement2
+from ob_utils.sniffles_util import repair_dup_strand
 
 class TestSnifflesUtil_main(unittest.TestCase):
 
@@ -89,7 +90,7 @@ class TestSnifflesUtil_main(unittest.TestCase):
         input_simplify_control_bedpe = cur_dir + "/data/test7_sniffles_control.txt.gz"
         answer_file = cur_dir + "/data/test7_sniffles_answer.txt"
         output = tmp_dir + "/test7_sniffles.txt"
-        filt_clustered_rearrangement2(input_tumor_bedpe, output, input_simplify_control_bedpe, 0, 3, 1, 50, h_chrom_number)
+        filt_clustered_rearrangement2(input_tumor_bedpe, output, input_simplify_control_bedpe, 1, 3, 1, 50, h_chrom_number)
         self.assertTrue(filecmp.cmp(output, answer_file, shallow=False))
         shutil.rmtree(tmp_dir)
         
@@ -113,6 +114,16 @@ class TestSnifflesUtil_main(unittest.TestCase):
         input_simplify_control_bedpe = cur_dir + "/data/test9_sniffles_control.txt.gz"
         answer_file = cur_dir + "/data/test9_sniffles_answer.txt"
         output = tmp_dir + "/test9_sniffles.txt"
-        filt_clustered_rearrangement2(input_tumor_bedpe, output, input_simplify_control_bedpe, 0, 3, 5, 50, h_chrom_number)
+        filt_clustered_rearrangement2(input_tumor_bedpe, output, input_simplify_control_bedpe, 1, 3, 5, 50, h_chrom_number)
+        self.assertTrue(filecmp.cmp(output, answer_file, shallow=False))
+        shutil.rmtree(tmp_dir)   
+        
+    def test10(self):
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        tmp_dir = tempfile.mkdtemp()
+        input_tumor_bedpe = cur_dir + "/data/test10_sniffles_tumor.txt"
+        answer_file = cur_dir + "/data/test10_sniffles_answer.txt"
+        output = tmp_dir + "/test10_sniffles.txt"
+        repair_dup_strand(input_tumor_bedpe, output)
         self.assertTrue(filecmp.cmp(output, answer_file, shallow=False))
         shutil.rmtree(tmp_dir)   

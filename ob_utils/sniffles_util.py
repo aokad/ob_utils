@@ -30,6 +30,30 @@ def snifflesSVtoBedpe(input_vcf, output, f_grc, filter_scaffold_option, bcf_filt
     os.remove(out_pref + ".tmp2.bedpe")
 
 
+def repair_dup_strand(bedpe_file, output):
+    
+    hOUT = open(output, 'w')
+    with open(bedpe_file, 'r') as hin:
+        for line in hin:
+            
+            if line.startswith("#"):
+                header = line.rstrip('\n')
+                print(header, file=hOUT)
+                continue
+            line = line.rstrip('\n')
+            F = line.split('\t')
+
+            sv_type = F[10]
+            if sv_type == "INVDUP": continue
+            if sv_type == "INV/INVDUP": continue 
+            if sv_type == "DEL/INV": continue
+            if sv_type == "DUP/INS": continue
+                
+            print('\t'.join(F), file=hOUT)
+            
+    hOUT.close()  
+    
+
 def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedpe, control_check_margin, min_tumor_support_read,max_control_support_read,min_sv_length,h_chrom_number):
 
     hout = open(output_file, 'w')
@@ -46,9 +70,9 @@ def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedp
             format_keys, format_vals = F[20], F[21]
             tumor_support_read = utils.get_info_val(info1, "RE")
             if int(tumor_support_read) < min_tumor_support_read: continue
-            if sv_type != "BND":
-                sv_len = abs(int(utils.get_info_val(info1, "SVLEN")))
-                if sv_len < min_sv_length: continue        
+            # if sv_type != "BND":
+            #    sv_len = abs(int(utils.get_info_val(info1, "SVLEN")))
+            #    if sv_len < min_sv_length: continue        
             tumor_ref_read = utils.get_format_val(format_keys, format_vals, "DR")
             insert_seq = alt if sv_type == "INS" else "---"
                             
@@ -70,19 +94,22 @@ def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedp
                     record = record_line.split('\t')
 
                     if tchr1 == record[0] and tdir1 == record[8] and \
-                    int(tend1) >= int(record[1]) - control_check_margin and \
-                    int(tstart1) <= int(record[2]) + control_check_margin and \
+                    int(tstart1) >= int(record[1]) - control_check_margin and \
+                    int(tstart1) <= int(record[1]) + control_check_margin and \
+                    int(tend1) >= int(record[2]) - control_check_margin and \
+                    int(tend1) <= int(record[2]) + control_check_margin and \
                     tchr2 == record[3] and tdir2 == record[9] and \
-                    int(tend2) >= int(record[4]) - control_check_margin and \
-                    int(tstart2) <= int(record[5]) + control_check_margin and \
-                    sv_type == record[10]:
-                                                
+                    int(tstart2) >= int(record[4]) - control_check_margin and \
+                    int(tstart2) <= int(record[4]) + control_check_margin and \
+                    int(tend2) >= int(record[5]) - control_check_margin and \
+                    int(tend2) <= int(record[5]) + control_check_margin:
+
+                        control_support_read = int(record[11]) if record[11] != "." else record[11]
+                        control_ref_read = int(record[12]) if record[12] != "." else record[12]
+                        
                         if int(record[11]) > max_control_support_read:
                             control_flag = True
-                            
-                        if control_support_read < int(record[11]): 
-                            control_support_read = int(record[11])
-                            control_ref_read = int(record[12])
+                            break
 
             if not control_flag:
                 print("\t".join([tchr1, tend1, tdir1, tchr2, tend2, tdir2, insert_seq, tumor_ref_read, tumor_support_read, str(control_ref_read), str(control_support_read),sv_type]), file = hout)
@@ -130,35 +157,48 @@ def snifflesSVtoBedpe_main(args):
     
     snifflesSVtoBedpe(in_tumor_sv, output_prefix+'.sniffles_tumor_PASS.bedpe', f_grc, filter_scaffold_option, bcf_filter_option)
 
+    repair_dup_strand(output_prefix+'.sniffles_tumor_PASS.bedpe', output_prefix+'.sniffles_tumor_repaired.bedpe')
+
     snifflesSVtoBedpe(in_control_sv, output_prefix+'.sniffles_control_PASS.bedpe', f_grc, filter_scaffold_option, bcf_filter_option)
+
+    repair_dup_strand(output_prefix+'.sniffles_control_PASS.bedpe', output_prefix+'.sniffles_control_repaired.bedpe')
 
     bcftools_command = ["bcftools", "view", "-h", in_tumor_sv, "-o", output_prefix +'.sniffles.vcf.header']
     subprocess.check_call(bcftools_command)
     h_chrom_number = utils.make_chrom_number_dict(output_prefix +'.sniffles.vcf.header')
 
     with open(output_prefix+'.sniffles_control_simplify.bedpe', 'w') as hout:
-        simplify_sniffles(output_prefix+'.sniffles_control_PASS.bedpe', hout, h_chrom_number)
+        simplify_sniffles(output_prefix+'.sniffles_control_repaired.bedpe', hout, h_chrom_number)
 
     with open( output_prefix +'.sniffles_control_sorted.bedpe', 'w') as hout:
-        subprocess.check_call(['sort', '-k1,1', '-k2,2n', '-k4,4', '-k5,5n',  output_prefix +'.sniffles_control_simplify.bedpe'],  stdout = hout)
+        subprocess.check_call(['sort', '-k1,1', '-k2,2n', '-k4,4', '-k5,5n', '-k9,9', '-k10,10',  output_prefix +'.sniffles_control_simplify.bedpe'],  stdout = hout)
 
     with open(output_prefix +'.sniffles_control_sorted.bedpe.gz', "w") as hout:
         subprocess.check_call(["bgzip", "-f", "-c", output_prefix +'.sniffles_control_sorted.bedpe'], stdout = hout)
     subprocess.check_call(["tabix", "-p", "bed", output_prefix +'.sniffles_control_sorted.bedpe.gz'])
           
-    filt_clustered_rearrangement2(output_prefix+'.sniffles_tumor_PASS.bedpe', output_prefix+'.sniffles_filtered.txt', 
+    filt_clustered_rearrangement2(output_prefix+'.sniffles_tumor_repaired.bedpe', output_prefix+'.sniffles_filtered.txt', 
     output_prefix+'.sniffles_control_sorted.bedpe.gz', margin, min_tumor_support_read, max_control_support_read, min_sv_length, h_chrom_number)
-    
-    hOUT = open(output, 'w')
-    subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k4,4", "-k5,5n", output_prefix + ".sniffles_filtered.txt"],  stdout = hOUT)
-    hOUT.close()
 
+    with open(output_prefix + ".sniffles_sorted.txt", 'w') as hout:
+        subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k4,4", "-k5,5n", "-k3,3", "-k6,6", output_prefix + ".sniffles_filtered.txt"],  stdout = hout)
+
+    with open(output, 'w') as hout:
+        l_header = ["Chr_1","Pos_1","Dir_1","Chr_2","Pos_2","Dir_2","Inserted_Seq","Checked_Read_Num_Tumor","Supporting_Read_Num_Tumor","Checked_Read_Num_Control","Supporting_Read_Num_Control","Sv_Type"]
+        print("\t".join(l_header), file=hout)
+        with open(output_prefix + ".sniffles_sorted.txt", 'r') as hin:
+            for line in hin:
+                print(line.rstrip('\n'), file=hout)
+            
     if not debug:
-        os.remove(output_prefix+'.sniffles_tumor_PASS.bedpe')
-        os.remove(output_prefix+'.sniffles_control_PASS.bedpe')
+        os.remove(output_prefix +'.sniffles_tumor_PASS.bedpe')
+        os.remove(output_prefix +'.sniffles_control_PASS.bedpe')
+        os.remove(output_prefix +'.sniffles_tumor_repaired.bedpe')
+        os.remove(output_prefix +'.sniffles_control_repaired.bedpe')
         os.remove(output_prefix +'.sniffles.vcf.header')
         os.remove(output_prefix +'.sniffles_control_simplify.bedpe')
         os.remove(output_prefix +'.sniffles_control_sorted.bedpe')
         os.remove(output_prefix +'.sniffles_filtered.txt')
+        os.remove(output_prefix +'.sniffles_sorted.txt')
 
     
