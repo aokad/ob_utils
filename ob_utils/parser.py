@@ -63,6 +63,7 @@ def create_parser():
         manta_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
         manta_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
         manta_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
+        manta_parser.add_argument("--is_cnv", default = False, action = 'store_true', help = "analysis CNV")
         return manta_parser
     
     
