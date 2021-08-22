@@ -16,6 +16,7 @@ from .gridss_util import gridssSVtoBedpe_main
 from .svaba_util import svabaSVtoBedpe_main
 from .sniffles_util import snifflesSVtoBedpe_main
 from .svim_util import svimSVtoBedpe_main
+from .common_bedpe_util import bedpetoBedpe_main
 from .merge_sv2 import merge_SVs
 from .liftover_trafic import liftover_trafic_main
 
@@ -51,6 +52,7 @@ def create_parser():
         genomonsv_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
         genomonsv_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
         genomonsv_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        genomonsv_parser.add_argument("--v2", help = 'chromosome of sv file. True=new format|False=old format', action = 'store_true', default = False )        
         return genomonsv_parser
     
     
@@ -135,6 +137,16 @@ def create_parser():
 
         return svim_parser
 
+
+    def _create_common_bedpe_util_parser(subparsers):
+        
+        common_bedpe_parser = subparsers.add_parser("common_bedpe", help = "convert the common bedpe to BEDPE file for comparison")
+        common_bedpe_parser.add_argument("--in_bedpe", help = "the bedpe format file", type = str, required=True)
+        common_bedpe_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
+        common_bedpe_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
+        return common_bedpe_parser
+    
+    
     def _merge_sv_parser(subparsers):
         
         merge_svs_parser = subparsers.add_parser("merge_sv", help = "merge bedpe files")
@@ -176,6 +188,8 @@ def create_parser():
     svaba_parser.set_defaults(func = svabaSVtoBedpe_main)
     sniffles_parser = _create_sniffles_util_parser(subparsers)
     sniffles_parser.set_defaults(func = snifflesSVtoBedpe_main)
+    common_bedpe_parser = _create_common_bedpe_util_parser(subparsers)
+    common_bedpe_parser.set_defaults(func = bedpetoBedpe_main)
     svim_parser = _create_svim_util_parser(subparsers)
     svim_parser.set_defaults(func = svimSVtoBedpe_main)
     merge_svs_parser = _merge_sv_parser(subparsers)
