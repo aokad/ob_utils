@@ -144,6 +144,7 @@ def create_parser():
         common_bedpe_parser.add_argument("--in_bedpe", help = "the bedpe format file", type = str, required=True)
         common_bedpe_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
         common_bedpe_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 10)
+        common_bedpe_parser.add_argument("--min_sv_size", help = "minimum sv size", type = int, default = 50)
         return common_bedpe_parser
     
     
