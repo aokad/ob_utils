@@ -17,11 +17,10 @@ def filter_min_sv_size(bedpe_file, output, min_sv_size):
                 F = line.split('\t')
                 chr1 = F[0]
                 chr2 = F[3]
-                if chr1 == chr2:
-                    end1 = F[2]
-                    end2 = F[5]
-                    if (int(end2) - int(end1)) > int(min_sv_size):
-                        print(line, file=hout)
+                end1 = F[2]
+                end2 = F[5]
+                if chr1 == chr2 and  (int(end2) - int(end1)) < int(min_sv_size): continue
+                print(line, file=hout)
     
 
 def filter_scaffold(bedpe_file, output, f_grc):
