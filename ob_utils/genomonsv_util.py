@@ -88,13 +88,15 @@ def genomonSVtoBedpe2(in_genomonsv, output, margin):
     genomonSVFormattoBedpe2(in_genomonsv, out_pref + ".tmp1.bedpe")
 
     give_margin_bedpe(out_pref + ".tmp1.bedpe", out_pref + ".tmp2.bedpe", margin)
+    filter_scaffold(out_pref + ".tmp2.bedpe", out_pref + ".tmp3.bedpe", f_grc)
 
     hOUT = open(output, 'w')
-    subprocess.check_call(["bedtools", "sort", "-i", out_pref + ".tmp2.bedpe"], stdout = hOUT)
+    subprocess.check_call(["bedtools", "sort", "-i", out_pref + ".tmp3.bedpe"], stdout = hOUT)
     hOUT.close()
 
     os.remove(out_pref + ".tmp1.bedpe")
     os.remove(out_pref + ".tmp2.bedpe")
+    os.remove(out_pref + ".tmp3.bedpe")
 
 def genomonSVtoBedpe_main(args):
   
