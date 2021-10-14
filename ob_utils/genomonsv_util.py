@@ -82,7 +82,7 @@ def genomonSVFormattoBedpe2(genomonsv_file, output):
                        'GenomonSV_'+str(idx), 'NA', strand1, strand2, d_svtype[svtype], insseq, info]), file=hout)
                  idx +=1 
 
-def genomonSVtoBedpe2(in_genomonsv, output, margin):
+def genomonSVtoBedpe2(in_genomonsv, output, margin, f_grc):
 
     out_pref, ext = os.path.splitext(output)
     genomonSVFormattoBedpe2(in_genomonsv, out_pref + ".tmp1.bedpe")
@@ -101,7 +101,7 @@ def genomonSVtoBedpe2(in_genomonsv, output, margin):
 def genomonSVtoBedpe_main(args):
   
     if args.v2:  
-        genomonSVtoBedpe2(args.in_genomon_sv, args.output, args.margin)
+        genomonSVtoBedpe2(args.in_genomon_sv, args.output, args.margin, args.f_grc)
     else:
         genomonSVtoBedpe(args.in_genomon_sv, args.output, args.margin, args.f_grc)
 
