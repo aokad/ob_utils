@@ -74,7 +74,6 @@ def genomonSVFormattoBedpe2(genomonsv_file, output):
                         'Num_Control_Var_Read_Pair='+ F[16], \
                         'Control_VAF='+ F[17], \
                         'Minus_Log_Fisher_P_value='+ F[18], \
-                        'Non-Matched_Control_Sample_With_Max_Junction='+ F[19], \
                         'Num_Max_Non-Matched_Control_Junction='+ F[20], \
                         'Max_Over_Hang_1='+ F[21], \
                         'Max_Over_Hang_2='+ F[22]])
