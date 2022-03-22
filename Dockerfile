@@ -48,9 +48,9 @@ make
 ENV PATH $PATH:/tools/bedtools2/bin
 
 RUN cd /tools && \
-echo "build ob_utils-0.0.11" && \
-wget -nc https://github.com/ken0-1n/ob_utils/archive/v0.0.11.tar.gz && \
-tar xzvf v0.0.11.tar.gz && \
-cd ob_utils-0.0.11 && \
+echo "build ob_utils-0.0.12" && \
+wget -nc https://github.com/ken0-1n/ob_utils/archive/v0.0.12.tar.gz && \
+tar xzvf v0.0.12.tar.gz && \
+cd ob_utils-0.0.12 && \
 python3 setup.py install
 

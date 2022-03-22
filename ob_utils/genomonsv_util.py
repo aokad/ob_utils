@@ -40,7 +40,7 @@ def genomonSVtoBedpe(in_genomonsv, output, margin, f_grc):
     filter_scaffold(out_pref + ".tmp2.bedpe", out_pref + ".tmp3.bedpe", f_grc)
 
     hOUT = open(output, 'w')
-    subprocess.check_call(["bedtools", "sort", "-i", out_pref + ".tmp3.bedpe"], stdout = hOUT)
+    subprocess.check_call(["bedtools", "sort", "-header", "-i", out_pref + ".tmp3.bedpe"], stdout = hOUT)
     hOUT.close()
 
     os.remove(out_pref + ".tmp1.bedpe")
@@ -67,16 +67,16 @@ def genomonSVFormattoBedpe2(genomonsv_file, output):
                  strand1, strand2 = F[2], F[5]
                  insseq = F[6]
                  svtype = F[7]
-                 info = ";".join(['Num_Tumor_Ref_Read_Pair='+ F[12], \
-                        'Num_Tumor_Var_Read_Pair='+ F[13], \
-                        'Tumor_VAF='+ F[14], \
-                        'Num_Control_Ref_Read_Pair='+ F[15], \
-                        'Num_Control_Var_Read_Pair='+ F[16], \
-                        'Control_VAF='+ F[17], \
-                        'Minus_Log_Fisher_P_value='+ F[18], \
-                        'Num_Max_Non-Matched_Control_Junction='+ F[20], \
-                        'Max_Over_Hang_1='+ F[21], \
-                        'Max_Over_Hang_2='+ F[22]])
+                 info = ";".join(['Num_Tumor_Ref_Read_Pair='+ F[hF.index('Num_Tumor_Ref_Read_Pair')], \
+                        'Num_Tumor_Var_Read_Pair='+ F[hF.index('Num_Tumor_Var_Read_Pair')], \
+                        'Tumor_VAF='+ F[hF.index('Tumor_VAF')], \
+                        'Num_Control_Ref_Read_Pair='+ F[hF.index('Num_Control_Ref_Read_Pair')], \
+                        'Num_Control_Var_Read_Pair='+ F[hF.index('Num_Control_Var_Read_Pair')], \
+                        'Control_VAF='+ F[hF.index('Control_VAF')], \
+                        'Minus_Log_Fisher_P_value='+ F[hF.index('Minus_Log_Fisher_P_value')], \
+                        'Num_Max_Non-Matched_Control_Junction='+ F[hF.index('Num_Max_Non-Matched_Control_Junction')], \
+                        'Max_Over_Hang_1='+ F[hF.index('Max_Over_Hang_1')], \
+                        'Max_Over_Hang_2='+ F[hF.index('Max_Over_Hang_2')]])
                  print("\t".join([F[0],str(int(F[1])-1),F[1],F[3],str(int(F[4])-1),F[4], \
                        'GenomonSV_'+str(idx), 'NA', strand1, strand2, d_svtype[svtype], insseq, info]), file=hout)
                  idx +=1 

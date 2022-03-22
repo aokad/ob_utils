@@ -60,3 +60,46 @@ class TestGenomonSVtoBedpe_main(unittest.TestCase):
         answer_file = cur_dir + "/../data/COLO829.genomonSV.result.filt.test4_answer.bedpe"
         self.assertTrue(filecmp.cmp(output_file, answer_file, shallow=False))
         shutil.rmtree(tmp_dir)
+
+
+    def test5(self):
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        tmp_dir = cur_dir + "/../data"
+        # tmp_dir = tempfile.mkdtemp()
+        in_genomonsv = cur_dir + "/../data/COLO829.genomonSV.result.filt.test1.txt"
+        output_file = tmp_dir+"/COLO829.genomonSV.result.filt.test1_out_v2.bedpe"
+        args = self.parser.parse_args(["genomon_sv", "--in_genomon_sv", in_genomonsv, "--output", output_file, "--v2"])
+        args.func(args)
+
+        answer_file = cur_dir + "/../data/COLO829.genomonSV.result.filt.test1_answer_v2.bedpe"
+        self.assertTrue(filecmp.cmp(output_file, answer_file, shallow=False))
+        # shutil.rmtree(tmp_dir)
+
+
+    def test6(self):
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        tmp_dir = cur_dir + "/../data"
+        # tmp_dir = tempfile.mkdtemp()
+        in_genomonsv = cur_dir + "/../data/COLO829.genomonSV.result.filt.test1.txt"
+        output_file = tmp_dir+"/COLO829.genomonSV.result.filt.test2_out_v2.bedpe"
+        args = self.parser.parse_args(["genomon_sv", "--in_genomon_sv", in_genomonsv, "--output", output_file, "--margin", "1", "--v2"])
+        args.func(args)
+
+        answer_file = cur_dir + "/../data/COLO829.genomonSV.result.filt.test2_answer_v2.bedpe"
+        self.assertTrue(filecmp.cmp(output_file, answer_file, shallow=False))
+        # shutil.rmtree(tmp_dir)
+
+
+    def test7(self):
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        tmp_dir = cur_dir + "/../data"
+        # tmp_dir = tempfile.mkdtemp()
+        in_genomonsv = cur_dir + "/../data/COLO829.genomonSV.result.filt.test2.txt"
+        output_file = tmp_dir+"/COLO829.genomonSV.result.filt.test3_out_v2.bedpe"
+        args = self.parser.parse_args(["genomon_sv", "--in_genomon_sv", in_genomonsv, "--output", output_file, "--margin", "1", "--v2"])
+        args.func(args)
+
+        answer_file = cur_dir + "/../data/COLO829.genomonSV.result.filt.test3_answer_v2.bedpe"
+        self.assertTrue(filecmp.cmp(output_file, answer_file, shallow=False))
+        # shutil.rmtree(tmp_dir)
+
