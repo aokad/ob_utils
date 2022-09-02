@@ -4,8 +4,9 @@ from . import utils
 from .svtools.vcftobedpe import run_vcf2bedpe 
 from .filter_bedpe import filter_scaffold
 import pysam
+import re
 
-def snifflesSVtoBedpe(input_vcf, output, f_grc, filter_scaffold_option, bcf_filter_option):
+def dellySVtoBedpe(input_vcf, output, f_grc, filter_scaffold_option, bcf_filter_option):
 
     out_pref, ext = os.path.splitext(output)
 
@@ -44,17 +45,41 @@ def repair_dup_strand(bedpe_file, output):
             F = line.split('\t')
 
             sv_type = F[10]
-            if sv_type == "INVDUP": continue
-            if sv_type == "INV/INVDUP": continue 
-            if sv_type == "DEL/INV": continue
-            if sv_type == "DUP/INS": continue
-                
-            print('\t'.join(F), file=hOUT)
+            alt = F[14]
+
+            strand1 = []
+            strand2 = []
+            if sv_type == "DEL":
+                strand1.append('+')
+                strand2.append('-')
+            elif sv_type == "INV":
+                strand1.append('+')
+                strand1.append('-')
+                strand2.append('+')
+                strand2.append('-')
+            elif sv_type == "DUP":
+                strand1.append('-')
+                strand2.append('+')
+            elif sv_type == "INS":
+                strand1.append('+')
+                strand2.append('-')
+            elif sv_type == "BND":
+                if alt.startswith('N'):
+                    strand1.append('+')
+                else:
+                    strand1.append('-')
+                alt_seq = re.findall(r'([][])(.+?)([][])', alt)
+                if alt_seq[0][0].startswith(']'):
+                    strand2.append('+')
+                else:
+                    strand2.append('-')
+            for i in range(len(strand1)):
+                print('\t'.join(F[0:8])+'\t'+strand1[i]+'\t'+strand2[i]+'\t'+ '\t'.join(F[10:]), file=hOUT)
             
     hOUT.close()  
     
 
-def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedpe, control_check_margin, min_tumor_support_read,max_control_support_read,min_sv_length,h_chrom_number, sniffles2):
+def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedpe, control_check_margin, min_tumor_support_read,max_control_support_read,min_sv_length,h_chrom_number):
 
     hout = open(output_file, 'w')
     control_junction_db = pysam.TabixFile(control_junction_bedpe)
@@ -68,14 +93,11 @@ def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedp
             alt = F[14]
             info1, info2 = F[18], F[19]
             format_keys, format_vals = F[20], F[21]
-            if sniffles2:
-                tumor_support_read = utils.get_info_val(info1, "SUPPORT")
-            else:
-                tumor_support_read = utils.get_info_val(info1, "RE")
+            tumor_support_read = utils.get_info_val(info1, "SR")
             if int(tumor_support_read) < min_tumor_support_read: continue
             # if sv_type != "BND":
             #    sv_len = abs(int(utils.get_info_val(info1, "SVLEN")))
-            #    if sv_len < min_sv_length: continue        
+            #    if sv_len < min_sv_length: continue
             tumor_ref_read = utils.get_format_val(format_keys, format_vals, "DR")
             insert_seq = alt if sv_type == "INS" else "---"
                             
@@ -120,7 +142,7 @@ def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedp
     hout.close()
 
     
-def simplify_sniffles(in_control_bedpe, hout, h_chrom_number, sniffles2):
+def simplify_delly(in_control_bedpe, hout, h_chrom_number):
 
     with open(in_control_bedpe, 'r') as hin:
         for line in hin:
@@ -130,10 +152,7 @@ def simplify_sniffles(in_control_bedpe, hout, h_chrom_number, sniffles2):
             sv_type = F[10]
             info1 = F[18]
             format_keys, format_vals = F[20], F[21]
-            if sniffles2:
-                support_read = utils.get_info_val(info1, "SUPPORT")
-            else:
-                support_read = utils.get_info_val(info1, "RE")
+            support_read = utils.get_info_val(info1, "SR")
             ref_read = utils.get_format_val(format_keys, format_vals, "DR")
         
             sort_flag = utils.sort_breakpoint_main(tchr1,tstart1,tchr2,tstart2,h_chrom_number)
@@ -144,10 +163,10 @@ def simplify_sniffles(in_control_bedpe, hout, h_chrom_number, sniffles2):
             print('\t'.join(l_bed_record), file = hout)
             
             
-def snifflesSVtoBedpe_main(args):
+def dellySVtoBedpe_main(args):
     
-    in_tumor_sv = args.in_sniffles_tumor_sv
-    in_control_sv = args.in_sniffles_control_sv
+    in_tumor_sv = args.in_delly_tumor_sv
+    in_control_sv = args.in_delly_control_sv
     margin = args.margin
     f_grc = args.f_grc
     filter_scaffold_option = args.filter_scaffold_option
@@ -157,54 +176,53 @@ def snifflesSVtoBedpe_main(args):
     min_sv_length = args.min_sv_length
     output = args.output
     debug = args.debug
-    sniffles2 = args.sniffles2
 
     output_prefix, ext = os.path.splitext(output)
     
-    snifflesSVtoBedpe(in_tumor_sv, output_prefix+'.sniffles_tumor_PASS.bedpe', f_grc, filter_scaffold_option, bcf_filter_option)
+    dellySVtoBedpe(in_tumor_sv, output_prefix+'.delly_tumor_PASS.bedpe', f_grc, filter_scaffold_option, bcf_filter_option)
 
-    repair_dup_strand(output_prefix+'.sniffles_tumor_PASS.bedpe', output_prefix+'.sniffles_tumor_repaired.bedpe')
+    repair_dup_strand(output_prefix+'.delly_tumor_PASS.bedpe', output_prefix+'.delly_tumor_repaired.bedpe')
 
-    snifflesSVtoBedpe(in_control_sv, output_prefix+'.sniffles_control_PASS.bedpe', f_grc, filter_scaffold_option, bcf_filter_option)
+    dellySVtoBedpe(in_control_sv, output_prefix+'.delly_control_PASS.bedpe', f_grc, filter_scaffold_option, bcf_filter_option)
 
-    repair_dup_strand(output_prefix+'.sniffles_control_PASS.bedpe', output_prefix+'.sniffles_control_repaired.bedpe')
+    repair_dup_strand(output_prefix+'.delly_control_PASS.bedpe', output_prefix+'.delly_control_repaired.bedpe')
 
-    bcftools_command = ["bcftools", "view", "-h", in_tumor_sv, "-o", output_prefix +'.sniffles.vcf.header']
+    bcftools_command = ["bcftools", "view", "-h", in_tumor_sv, "-o", output_prefix +'.delly.vcf.header']
     subprocess.check_call(bcftools_command)
-    h_chrom_number = utils.make_chrom_number_dict(output_prefix +'.sniffles.vcf.header')
+    h_chrom_number = utils.make_chrom_number_dict(output_prefix +'.delly.vcf.header')
 
-    with open(output_prefix+'.sniffles_control_simplify.bedpe', 'w') as hout:
-        simplify_sniffles(output_prefix+'.sniffles_control_repaired.bedpe', hout, h_chrom_number, sniffles2)
+    with open(output_prefix+'.delly_control_simplify.bedpe', 'w') as hout:
+        simplify_delly(output_prefix+'.delly_control_repaired.bedpe', hout, h_chrom_number)
 
-    with open( output_prefix +'.sniffles_control_sorted.bedpe', 'w') as hout:
-        subprocess.check_call(['sort', '-k1,1', '-k2,2n', '-k4,4', '-k5,5n', '-k9,9', '-k10,10',  output_prefix +'.sniffles_control_simplify.bedpe'],  stdout = hout)
+    with open( output_prefix +'.delly_control_sorted.bedpe', 'w') as hout:
+        subprocess.check_call(['sort', '-k1,1', '-k2,2n', '-k4,4', '-k5,5n', '-k9,9', '-k10,10',  output_prefix +'.delly_control_simplify.bedpe'],  stdout = hout)
 
-    with open(output_prefix +'.sniffles_control_sorted.bedpe.gz', "w") as hout:
-        subprocess.check_call(["bgzip", "-f", "-c", output_prefix +'.sniffles_control_sorted.bedpe'], stdout = hout)
-    subprocess.check_call(["tabix", "-p", "bed", output_prefix +'.sniffles_control_sorted.bedpe.gz'])
+    with open(output_prefix +'.delly_control_sorted.bedpe.gz', "w") as hout:
+        subprocess.check_call(["bgzip", "-f", "-c", output_prefix +'.delly_control_sorted.bedpe'], stdout = hout)
+    subprocess.check_call(["tabix", "-p", "bed", output_prefix +'.delly_control_sorted.bedpe.gz'])
           
-    filt_clustered_rearrangement2(output_prefix+'.sniffles_tumor_repaired.bedpe', output_prefix+'.sniffles_filtered.txt', 
-    output_prefix+'.sniffles_control_sorted.bedpe.gz', margin, min_tumor_support_read, max_control_support_read, min_sv_length, h_chrom_number, sniffles2)
+    filt_clustered_rearrangement2(output_prefix+'.delly_tumor_repaired.bedpe', output_prefix+'.delly_filtered.txt', 
+    output_prefix+'.delly_control_sorted.bedpe.gz', margin, min_tumor_support_read, max_control_support_read, min_sv_length, h_chrom_number)
 
-    with open(output_prefix + ".sniffles_sorted.txt", 'w') as hout:
-        subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k4,4", "-k5,5n", "-k3,3", "-k6,6", output_prefix + ".sniffles_filtered.txt"],  stdout = hout)
+    with open(output_prefix + ".delly_sorted.txt", 'w') as hout:
+        subprocess.check_call(["sort", "-k1,1", "-k2,2n", "-k4,4", "-k5,5n", "-k3,3", "-k6,6", output_prefix + ".delly_filtered.txt"],  stdout = hout)
 
     with open(output, 'w') as hout:
         l_header = ["Chr_1","Pos_1","Dir_1","Chr_2","Pos_2","Dir_2","Inserted_Seq","Checked_Read_Num_Tumor","Supporting_Read_Num_Tumor","Checked_Read_Num_Control","Supporting_Read_Num_Control","Sv_Type"]
         print("\t".join(l_header), file=hout)
-        with open(output_prefix + ".sniffles_sorted.txt", 'r') as hin:
+        with open(output_prefix + ".delly_sorted.txt", 'r') as hin:
             for line in hin:
                 print(line.rstrip('\n'), file=hout)
             
     if not debug:
-        os.remove(output_prefix +'.sniffles_tumor_PASS.bedpe')
-        os.remove(output_prefix +'.sniffles_control_PASS.bedpe')
-        os.remove(output_prefix +'.sniffles_tumor_repaired.bedpe')
-        os.remove(output_prefix +'.sniffles_control_repaired.bedpe')
-        os.remove(output_prefix +'.sniffles.vcf.header')
-        os.remove(output_prefix +'.sniffles_control_simplify.bedpe')
-        os.remove(output_prefix +'.sniffles_control_sorted.bedpe')
-        os.remove(output_prefix +'.sniffles_filtered.txt')
-        os.remove(output_prefix +'.sniffles_sorted.txt')
+        os.remove(output_prefix +'.delly_tumor_PASS.bedpe')
+        os.remove(output_prefix +'.delly_control_PASS.bedpe')
+        os.remove(output_prefix +'.delly_tumor_repaired.bedpe')
+        os.remove(output_prefix +'.delly_control_repaired.bedpe')
+        os.remove(output_prefix +'.delly.vcf.header')
+        os.remove(output_prefix +'.delly_control_simplify.bedpe')
+        os.remove(output_prefix +'.delly_control_sorted.bedpe')
+        os.remove(output_prefix +'.delly_filtered.txt')
+        os.remove(output_prefix +'.delly_sorted.txt')
 
     

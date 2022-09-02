@@ -24,7 +24,7 @@ def simplify_sniffles(in_control_bedpe, min_support_read, hout):
 
 
 def snifflesSVtoBedpe_main(args):
-    
+    print("called sniffles_control:snifflesSVtoBedpe_main")
     withopen
     simplify_sniffles(args.in_bedpe, args.output, args.in_control_bedpe)
 
