@@ -16,6 +16,8 @@ from .gridss_util import gridssSVtoBedpe_main
 from .svaba_util import svabaSVtoBedpe_main
 from .sniffles_util import snifflesSVtoBedpe_main
 from .delly_util import dellySVtoBedpe_main
+from .cutesv_util import cutesvSVtoBedpe_main
+from .camphor_util import camphorSVtoBedpe_main
 from .svim_util import svimSVtoBedpe_main
 from .common_bedpe_util import bedpetoBedpe_main
 from .merge_sv2 import merge_SVs
@@ -137,6 +139,37 @@ def create_parser():
 
         return delly_parser
 
+    def _create_cutesv_util_parser(subparsers):
+        
+        cutesv_parser = subparsers.add_parser("cutesv_sv", help = "convert the cuteSV sv format to BEDPE file")
+        cutesv_parser.add_argument("--in_cutesv_tumor_sv", help = "the vcf format file", type = str, required=True)
+        cutesv_parser.add_argument("--in_cutesv_control_sv", help = "the vcf format file", type = str, required=True)
+        cutesv_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
+        cutesv_parser.add_argument("--margin", help = "the margin for Bedpe", type = int, default = 50)
+        cutesv_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        cutesv_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
+        cutesv_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
+        cutesv_parser.add_argument("--min_tumor_support_read", help = "minimum tumor support reads", type = int, default = 3)
+        cutesv_parser.add_argument("--max_control_support_read", help = "maximum control support reads", type = int, default = 1)
+        cutesv_parser.add_argument("--min_sv_length", help = "minimum sv length", type = int, default = 1)
+        cutesv_parser.add_argument("--debug", default = False, action = 'store_true', help = "keep intermediate files")
+
+        return cutesv_parser
+
+    def _create_camphor_util_parser(subparsers):
+        
+        camphor_parser = subparsers.add_parser("camphor_sv", help = "convert the CAMPHORsomatic sv format to BEDPE file")
+        camphor_parser.add_argument("--in_camphor_tumor_sv", help = "the vcf format file", type = str, required=True)
+        camphor_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
+        camphor_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        camphor_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
+        camphor_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
+        camphor_parser.add_argument("--min_tumor_support_read", help = "minimum tumor support reads", type = int, default = 3)
+        camphor_parser.add_argument("--min_sv_length", help = "minimum sv length", type = int, default = 1)
+        camphor_parser.add_argument("--debug", default = False, action = 'store_true', help = "keep intermediate files")
+
+        return camphor_parser
+
     def _create_svim_util_parser(subparsers):
         
         svim_parser = subparsers.add_parser("svim_sv", help = "convert the svim sv format to BEDPE file")
@@ -208,6 +241,10 @@ def create_parser():
     sniffles_parser.set_defaults(func = snifflesSVtoBedpe_main)
     delly_parser = _create_delly_util_parser(subparsers)
     delly_parser.set_defaults(func = dellySVtoBedpe_main)
+    cutesv_parser = _create_cutesv_util_parser(subparsers)
+    cutesv_parser.set_defaults(func = cutesvSVtoBedpe_main)
+    camphor_parser = _create_camphor_util_parser(subparsers)
+    camphor_parser.set_defaults(func = camphorSVtoBedpe_main)
     common_bedpe_parser = _create_common_bedpe_util_parser(subparsers)
     common_bedpe_parser.set_defaults(func = bedpetoBedpe_main)
     svim_parser = _create_svim_util_parser(subparsers)
