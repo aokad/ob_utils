@@ -4,6 +4,7 @@ from . import utils
 from .svtools.vcftobedpe import run_vcf2bedpe 
 from .filter_bedpe import filter_scaffold
 import pysam
+import re
 
 def cutesvSVtoBedpe(input_vcf, output, f_grc, filter_scaffold_option, bcf_filter_option):
 
@@ -14,7 +15,7 @@ def cutesvSVtoBedpe(input_vcf, output, f_grc, filter_scaffold_option, bcf_filter
     else:
         subprocess.check_call(["bcftools", "view", "-o", out_pref + ".tmp1.vcf", input_vcf])
         
-    run_vcf2bedpe(out_pref + ".tmp1.vcf", out_pref + ".tmp1.bedpe")
+    run_vcf2bedpe(out_pref + ".tmp1.vcf", out_pref + ".tmp1.bedpe", "STRAND")
     
     if filter_scaffold_option:
         filter_scaffold(out_pref + ".tmp1.bedpe", out_pref + ".tmp2.bedpe", f_grc)
@@ -44,15 +45,34 @@ def repair_dup_strand(bedpe_file, output):
             F = line.split('\t')
 
             sv_type = F[10]
-            if sv_type == "INVDUP": continue
-            if sv_type == "INV/INVDUP": continue 
-            if sv_type == "DEL/INV": continue
-            if sv_type == "DUP/INS": continue
-                
+            alt = F[14]
+
+            #if sv_type == "DEL":
+            #    F[8] = '+'
+            #    F[9] = '-'
+            #elif sv_type == "INV":
+            #    F[8] = '*'
+            #    F[9] = '*'
+            #elif sv_type == "DUP":
+            #    F[8] = '-'
+            #    F[9] = '+'
+            #elif sv_type == "INS":
+            if sv_type == "INS":
+                F[8] = '+'
+                F[9] = '-'
+            #elif sv_type == "BND":
+            #    if alt.startswith('N'):
+            #        F[8] = '+'
+            #    else:
+            #        F[8] = '-'
+            #    alt_seq = re.findall(r'([][])(.+?)([][])', alt)
+            #    if alt_seq[0][0].startswith(']'):
+            #        F[9] = '+'
+            #    else:
+            #        F[9] = '-'
             print('\t'.join(F), file=hOUT)
             
     hOUT.close()  
-    
 
 def filt_clustered_rearrangement2(input_file, output_file, control_junction_bedpe, control_check_margin, min_tumor_support_read,max_control_support_read,min_sv_length,h_chrom_number):
 

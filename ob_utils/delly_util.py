@@ -47,35 +47,30 @@ def repair_dup_strand(bedpe_file, output):
             sv_type = F[10]
             alt = F[14]
 
-            strand1 = []
-            strand2 = []
             if sv_type == "DEL":
-                strand1.append('+')
-                strand2.append('-')
+                F[8] = '+'
+                F[9] = '-'
             elif sv_type == "INV":
-                strand1.append('+')
-                strand1.append('-')
-                strand2.append('+')
-                strand2.append('-')
+                F[8] = '*'
+                F[9] = '*'
             elif sv_type == "DUP":
-                strand1.append('-')
-                strand2.append('+')
+                F[8] = '-'
+                F[9] = '+'
             elif sv_type == "INS":
-                strand1.append('+')
-                strand2.append('-')
-            elif sv_type == "BND":
-                if alt.startswith('N'):
-                    strand1.append('+')
-                else:
-                    strand1.append('-')
-                alt_seq = re.findall(r'([][])(.+?)([][])', alt)
-                if alt_seq[0][0].startswith(']'):
-                    strand2.append('+')
-                else:
-                    strand2.append('-')
-            for i in range(len(strand1)):
-                print('\t'.join(F[0:8])+'\t'+strand1[i]+'\t'+strand2[i]+'\t'+ '\t'.join(F[10:]), file=hOUT)
-            
+                F[8] = '+'
+                F[9] = '-'
+            #elif sv_type == "BND":
+            #    if alt.startswith('N'):
+            #        F[8] = '+'
+            #    else:
+            #        F[8] = '-'
+            #    alt_seq = re.findall(r'([][])(.+?)([][])', alt)
+            #    if alt_seq[0][0].startswith(']'):
+            #        F[9] = '+'
+            #    else:
+            #        F[9] = '-'
+            print('\t'.join(F), file=hOUT)
+
     hOUT.close()  
     
 

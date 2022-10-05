@@ -18,11 +18,12 @@ class VcfToBedpeConverter(object):
     This is a class to take Vcf object(s) and convert them to Bedpe lines
     '''
 
-    def __init__(self):
+    def __init__(self, strands_tag=""):
         '''
         Initialize a new converter
         '''
-        pass
+        #pass
+        self.STRANDS_TAG = strands_tag
 
     def bnd_breakpoints(self, vcf_variant):
         '''
@@ -51,8 +52,9 @@ class VcfToBedpeConverter(object):
                 orientation1,
                 orientation2)
 
-    @staticmethod
-    def simple_breakpoints(vcf_variant):
+    #@staticmethod
+    #def simple_breakpoints(vcf_variant):
+    def simple_breakpoints(self, vcf_variant):
         '''
         Return a tuple containing breakpoints and orientations for simple SVs
         '''
@@ -65,8 +67,10 @@ class VcfToBedpeConverter(object):
         orientation1 = '+'
         orientation2 = '-'
 
-        if 'STRANDS' in vcf_variant.info:
-            strands = vcf_variant.info['STRANDS']
+        #if 'STRANDS' in vcf_variant.info:
+        #    strands = vcf_variant.info['STRANDS']
+        if self.STRANDS_TAG in vcf_variant.info:
+            strands = vcf_variant.info[self.STRANDS_TAG]
             orientation1, orientation2 = strands[:2]
 
         return (vcf_variant.chrom,

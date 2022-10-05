@@ -4,8 +4,19 @@ from . import utils
 from .svtools.vcftobedpe import run_vcf2bedpe 
 from .filter_bedpe import filter_scaffold
 import pysam
+import re
 
-def camphorSVtoBedpe(input_vcf, output, patched_vcf, f_grc, filter_scaffold_option, bcf_filter_option):
+def __get_INFO(F):
+    info = {}
+    for cell in F[18].split(";"):
+        if "=" in cell:
+            (key, value) = cell.split("=")
+            info[key] = value
+        else:
+            info[cell] = True
+    return info
+
+def camphorSVtoBedpe(input_vcf, output, patched_vcf, f_grc, filter_scaffold_option, bcf_filter_option, debug):
 
     out_pref, ext = os.path.splitext(output)
 
@@ -59,50 +70,36 @@ def camphorSVtoBedpe(input_vcf, output, patched_vcf, f_grc, filter_scaffold_opti
         subprocess.check_call(["bcftools", "view", "-o", out_pref + ".tmp1.vcf", patched_vcf])
         
     run_vcf2bedpe(out_pref + ".tmp1.vcf", out_pref + ".tmp1.bedpe")
-    
+
+    with open(out_pref + ".tmp1.bedpe", 'r') as hin:
+        with open(out_pref + ".tmp2.bedpe", 'w') as hout:
+            for line in hin:
+                line = line.rstrip('\n')
+                if line.startswith("#"):
+                    print(line, file=hout)
+                    continue
+                F = line.split("\t")
+                info = __get_INFO(F)
+                if "CHR2" in info:
+                    F[3] = info["CHR2"]
+                F[8] = "*"
+                F[9] = "*"
+                print('\t'.join(F), file=hout)
+
     if filter_scaffold_option:
-        filter_scaffold(out_pref + ".tmp1.bedpe", out_pref + ".tmp2.bedpe", f_grc)
+        filter_scaffold(out_pref + ".tmp2.bedpe", out_pref + ".tmp3.bedpe", f_grc)
     else:
-        shutil.copyfile(out_pref + '.tmp1.bedpe', out_pref + '.tmp2.bedpe')
+        shutil.copyfile(out_pref + '.tmp2.bedpe', out_pref + '.tmp3.bedpe')
 
     hOUT = open(output, 'w')
-    subprocess.check_call(["bedtools", "sort", "-i", out_pref + ".tmp2.bedpe"], stdout = hOUT)
+    subprocess.check_call(["bedtools", "sort", "-i", out_pref + ".tmp3.bedpe"], stdout = hOUT)
     hOUT.close()
 
-    os.remove(out_pref + ".tmp1.vcf")
-    os.remove(out_pref + ".tmp1.bedpe")
-    os.remove(out_pref + ".tmp2.bedpe")
-
-
-def repair_dup_strand(bedpe_file, output):
-    
-    hOUT = open(output, 'w')
-    with open(bedpe_file, 'r') as hin:
-        for line in hin:
-            
-            if line.startswith("#"):
-                header = line.rstrip('\n')
-                print(header, file=hOUT)
-                continue
-            line = line.rstrip('\n')
-            F = line.split('\t')
-            print('\t'.join(F[0:8])+'\t*\t*\t'+ '\t'.join(F[10:]), file=hOUT)
-            
-    hOUT.close()  
-
-    hOUT = open(output +".raw", 'w')
-    with open(bedpe_file, 'r') as hin:
-        for line in hin:
-            
-            if line.startswith("#"):
-                header = line.rstrip('\n')
-                print(header, file=hOUT)
-                continue
-            line = line.rstrip('\n')
-            print(line, file=hOUT)
-            
-    hOUT.close()  
-    
+    if not debug:
+        os.remove(out_pref + ".tmp1.vcf")
+        os.remove(out_pref + ".tmp1.bedpe")
+        os.remove(out_pref + ".tmp2.bedpe")
+        os.remove(out_pref + ".tmp3.bedpe")
 
 def filt_clustered_rearrangement2(input_file, output_file, min_tumor_support_read, min_sv_length, h_chrom_number):
 
@@ -148,14 +145,12 @@ def camphorSVtoBedpe_main(args):
 
     output_prefix, ext = os.path.splitext(output)
     
-    camphorSVtoBedpe(in_tumor_sv, output_prefix+'.camphor_tumor_PASS.bedpe', output_prefix+'.camphor_patched.vcf', f_grc, filter_scaffold_option, bcf_filter_option)
-
-    repair_dup_strand(output_prefix+'.camphor_tumor_PASS.bedpe', output_prefix+'.camphor_tumor_repaired.bedpe')
+    camphorSVtoBedpe(in_tumor_sv, output_prefix+'.camphor_tumor_PASS.bedpe', output_prefix+'.camphor_patched.vcf', f_grc, filter_scaffold_option, bcf_filter_option, debug)
 
     bcftools_command = ["bcftools", "view", "-h", output_prefix+'.camphor_patched.vcf', "-o", output_prefix +'.camphor_patched.vcf.header']
     subprocess.check_call(bcftools_command)
     h_chrom_number = utils.make_chrom_number_dict(output_prefix +'.camphor_patched.vcf.header')
-    filt_clustered_rearrangement2(output_prefix+'.camphor_tumor_repaired.bedpe', output_prefix+'.camphor_filtered.txt',
+    filt_clustered_rearrangement2(output_prefix+'.camphor_tumor_PASS.bedpe', output_prefix+'.camphor_filtered.txt',
     min_tumor_support_read, min_sv_length, h_chrom_number)
 
     with open(output_prefix + ".camphor_sorted.txt", 'w') as hout:
@@ -171,9 +166,6 @@ def camphorSVtoBedpe_main(args):
     if not debug:
         os.remove(output_prefix +'.camphor_tumor_PASS.bedpe')
         os.remove(output_prefix +'.camphor_patched.vcf')
-        os.remove(output_prefix +'.camphor_tumor_repaired.bedpe')
         os.remove(output_prefix +'.camphor_patched.vcf.header')
         os.remove(output_prefix +'.camphor_filtered.txt')
         os.remove(output_prefix +'.camphor_sorted.txt')
-
-    

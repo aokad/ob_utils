@@ -134,15 +134,31 @@ def get_hash_key_singleend_sv(F, margin):
     
 def make_chrom_number_dict(vcf_header):
 
-    h_chrom_number = {}
+    #h_chrom_number = {}
+    #with open(vcf_header, 'r') as hin:
+    #    count = 1
+    #    for line in hin:
+    #        if line.startswith('##contig=<ID='): 
+    #            line = line.rstrip('\n')
+    #            line = line.replace("##contig=<ID=","")
+    #            F = line.split(",")
+    #            h_chrom_number[F[0]] = count
+    #            count += 1
+    #
+    #return h_chrom_number
+
+    keys = []
     with open(vcf_header, 'r') as hin:
-        count = 1
         for line in hin:
             if line.startswith('##contig=<ID='): 
                 line = line.rstrip('\n')
                 line = line.replace("##contig=<ID=","")
                 F = line.split(",")
-                h_chrom_number[F[0]] = count
-                count += 1
-    
+                keys.append(F[0])
+
+    h_chrom_number = {}
+    count = 1
+    for key in sorted(keys):
+        h_chrom_number[key] = count
+        count += 1
     return h_chrom_number
