@@ -18,44 +18,48 @@ python3 setup.py install
 ```
 
 ## Commands
-
 ```
-ob_utils manta_sv [-h] --in_manta_sv IN_MANTA_SV --output OUTPUT
-                         [--margin MARGIN] [--f_grc]
-```
-```
-ob_utils gridss_sv [-h] --in_gridss_sv IN_GRIDSS_SV --output OUTPUT
-                          [--margin MARGIN] [--f_grc]
+ob_utils camphor_sv [-h] --in_camphor_tumor_sv IN_CAMPHOR_TUMOR_SV --output OUTPUT [--f_grc]
+                    [--bcf_filter_option BCF_FILTER_OPTION] [--filter_scaffold_option]
+                    [--min_tumor_support_read MIN_TUMOR_SUPPORT_READ]
+                    [--min_sv_length MIN_SV_LENGTH] [--debug]
 ```
 ```
-ob_utils svaba_sv [-h] --in_svaba_sv IN_SVABA_SV --in_svaba_indel
-                         IN_SVABA_INDEL --output OUTPUT [--margin MARGIN]
-                         [--f_grc] [--f_germ]
-                         [--normal_max_variant NORMAL_MAX_VARIANT]
-                         [--tumor_min_variant TUMOR_MIN_VARIANT]
-                         [--normal_min_depth NORMAL_MIN_DEPTH]
-                         [--tumor_min_depth TUMOR_MIN_DEPTH]
-                         [--min_del_size MIN_DEL_SIZE]
-                         [--min_ins_size MIN_INS_SIZE]
+ob_utils cutesv_sv [-h] --in_cutesv_tumor_sv IN_CUTESV_TUMOR_SV --in_cutesv_control_sv
+                   IN_CUTESV_CONTROL_SV --output OUTPUT [--margin MARGIN] [--f_grc]
+                   [--bcf_filter_option BCF_FILTER_OPTION] [--filter_scaffold_option]
+                   [--min_tumor_support_read MIN_TUMOR_SUPPORT_READ]
+                   [--max_control_support_read MAX_CONTROL_SUPPORT_READ]
+                   [--min_sv_length MIN_SV_LENGTH] [--debug]
 ```
 ```
-ob_utils genomon_sv [-h] --in_genomon_sv IN_GENOMON_SV --output OUTPUT
-                           [--margin MARGIN] [--f_grc]
+ob_utils delly_sv [-h] --in_delly_tumor_sv IN_DELLY_TUMOR_SV --in_delly_control_sv
+                  IN_DELLY_CONTROL_SV --output OUTPUT [--margin MARGIN] [--f_grc]
+                  [--bcf_filter_option BCF_FILTER_OPTION] [--filter_scaffold_option]
+                  [--min_tumor_support_read MIN_TUMOR_SUPPORT_READ]
+                  [--max_control_support_read MAX_CONTROL_SUPPORT_READ]
+                  [--min_sv_length MIN_SV_LENGTH] [--debug]
 ```
 ```
-ob_utils merge_sv [-h] --in_genomonsv IN_GENOMONSV --in_manta IN_MANTA
-                         --in_svaba IN_SVABA --in_gridss IN_GRIDSS --output
-                         OUTPUT [--margin MARGIN] [--f_grc] [--f_germ]
-                         --simple_repeat_file SIMPLE_REPEAT_FILE --reference
-                         REFERENCE [--genome_id {hg19,hg38}]
-```
-
-You can check the manual by typing
-```
-ob_utils manta_sv -h
+ob_utils genomon_sv [-h] --in_genomon_sv IN_GENOMON_SV --output OUTPUT [--margin MARGIN] [--f_grc]
+                    [--v2]
 ```
 ```
-ob_utils merge_sv -h
+ob_utils sniffles_sv [-h] --in_sniffles_tumor_sv IN_SNIFFLES_TUMOR_SV --in_sniffles_control_sv
+                     IN_SNIFFLES_CONTROL_SV --output OUTPUT [--margin MARGIN] [--f_grc]
+                     [--bcf_filter_option BCF_FILTER_OPTION] [--filter_scaffold_option]
+                     [--min_tumor_support_read MIN_TUMOR_SUPPORT_READ]
+                     [--max_control_support_read MAX_CONTROL_SUPPORT_READ]
+                     [--min_sv_length MIN_SV_LENGTH] [--debug] [--sniffles2]
+```
+```
+ob_utils svim_sv [-h] --in_svim_tumor_sv IN_SVIM_TUMOR_SV --in_svim_control_sv
+                 IN_SVIM_CONTROL_SV --output OUTPUT [--margin MARGIN] [--f_grc]
+                 [--bcf_filter_option BCF_FILTER_OPTION]
+                 [--filter_scaffold_option]
+                 [--min_tumor_support_read MIN_TUMOR_SUPPORT_READ]
+                 [--max_control_support_read MAX_CONTROL_SUPPORT_READ]
+                 [--min_sv_length MIN_SV_LENGTH] [--debug]
 ```
 
 ## Results
