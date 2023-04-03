@@ -60,7 +60,8 @@ def get_info_val(infos, key):
     ret = ""
     l_info = infos.split(';')
     for info in l_info:
-        if info.startswith(key):
+        #if info.startswith(key):
+        if info.startswith(key + "="):
             ret = info.split("=")[1]
             break
     return ret
