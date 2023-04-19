@@ -16,8 +16,8 @@ from .vcf.file import Vcf
 from .vcf.variant import Variant
 from .vcftobedpeconverter import VcfToBedpeConverter
 
-def vcfToBedpe(vcf_file, bedpe_out, strands_tag=""):
-    converter = VcfToBedpeConverter(strands_tag)
+def vcfToBedpe(vcf_file, bedpe_out, strands_tag, end_tag):
+    converter = VcfToBedpeConverter(strands_tag, end_tag)
     vcf = Vcf()
     in_header = True
     header = []
@@ -112,14 +112,14 @@ def vcfToBedpe(vcf_file, bedpe_out, strands_tag=""):
     bedpe_out.close()
     return
 
-def run_vcf2bedpe(input_vcf, output_bedpe, strands_tag = ""):
+def run_vcf2bedpe(input_vcf, output_bedpe, strands_tag = "", end_tag = "END"):
     
     with open(output_bedpe, 'w') as hout:
         if input_vcf.endswith('.gz'):
             import gzip
             with gzip.open(input_vcf, 'rb') as hin:
-                return vcfToBedpe(hin, hout, strands_tag)
+                return vcfToBedpe(hin, hout, strands_tag, end_tag)
         else:
             with open(input_vcf, 'r') as hin:
-                return vcfToBedpe(hin, hout, strands_tag)
+                return vcfToBedpe(hin, hout, strands_tag, end_tag)
 

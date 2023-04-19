@@ -18,12 +18,13 @@ class VcfToBedpeConverter(object):
     This is a class to take Vcf object(s) and convert them to Bedpe lines
     '''
 
-    def __init__(self, strands_tag=""):
+    def __init__(self, strands_tag, end_tag):
         '''
         Initialize a new converter
         '''
         #pass
         self.STRANDS_TAG = strands_tag
+        self.END_TAG = end_tag
 
     def bnd_breakpoints(self, vcf_variant):
         '''
@@ -60,7 +61,7 @@ class VcfToBedpeConverter(object):
         '''
         breakpoint1 = vcf_variant.pos
         try:
-            breakpoint2 = int(vcf_variant.info['END'])
+            breakpoint2 = int(float(vcf_variant.info[self.END_TAG]))
         except KeyError:
             raise ValueError('END entry in VCF required for conversion to BEDPE')
 
