@@ -1,3 +1,4 @@
 #! /usr/bin/env python
 
-__version__ = '0.0.12c'
+# 0.0.12d
+__version__ = '0.0.12.4'

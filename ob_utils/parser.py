@@ -20,6 +20,7 @@ from .cutesv_util import cutesvSVtoBedpe_main
 from .camphor_util import camphorSVtoBedpe_main
 from .svim_util import svimSVtoBedpe_main
 from .savana_util import savanaSVtoBedpe_main
+from .savana103_util import savanaSVtoBedpe_main
 from .common_bedpe_util import bedpetoBedpe_main
 from .merge_sv2 import merge_SVs
 from .liftover_trafic import liftover_trafic_main
@@ -27,6 +28,9 @@ from .liftover_trafic import liftover_trafic_main
 def create_parser():
     prog = "ob_utils"
     parser = argparse.ArgumentParser(prog = prog)
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
     parser.add_argument("--version", action = "version", version = prog + "-" + __version__)
     subparsers = parser.add_subparsers()
     
@@ -202,6 +206,20 @@ def create_parser():
 
         return savana_parser
 
+    def _create_savana103_util_parser(subparsers):
+        
+        savana_parser = subparsers.add_parser("savana1.0.3_sv", help = "convert the savana sv format to BEDPE file")
+        savana_parser.add_argument("--in_savana_tumor_sv", help = "the vcf format file", type = str, required=True)
+        savana_parser.add_argument("--output", help = "the output bedpe format file", type = str, required=True)
+        savana_parser.add_argument("--f_grc", help = 'chromosome of sv file. True=chr1|False=1', action = 'store_true', default = False )        
+        savana_parser.add_argument("--bcf_filter_option", help = "filter options for bcftools view", type = str, default = "PASS")
+        savana_parser.add_argument("--filter_scaffold_option", default = False, action = 'store_true', help = "if True, output only chr1-22 and XY.")
+        savana_parser.add_argument("--min_tumor_support_read", help = "minimum tumor support reads", type = int, default = 3)
+        savana_parser.add_argument("--min_sv_length", help = "minimum sv length", type = int, default = 1)
+        savana_parser.add_argument("--debug", default = False, action = 'store_true', help = "keep intermediate files")
+
+        return savana_parser
+
     def _create_common_bedpe_util_parser(subparsers):
         
         common_bedpe_parser = subparsers.add_parser("common_bedpe", help = "convert the common bedpe to BEDPE file for comparison")
@@ -265,6 +283,8 @@ def create_parser():
     svim_parser.set_defaults(func = svimSVtoBedpe_main)
     savana_parser = _create_savana_util_parser(subparsers)
     savana_parser.set_defaults(func = savanaSVtoBedpe_main)
+    savana103_parser = _create_savana103_util_parser(subparsers)
+    savana103_parser.set_defaults(func = savanaSVtoBedpe_main)
     merge_svs_parser = _merge_sv_parser(subparsers)
     merge_svs_parser.set_defaults(func = merge_SVs)
     lo_trafic_parser = _liftover_trafic_parser(subparsers)
